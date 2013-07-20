@@ -29,25 +29,25 @@
 
 (set! load/suppress-loading-message? #t) (newline)
 
-(load-relative "testing/load")
+(load-relative "../testing/load")
 
-(load-relative "examples/coin-flipping")
-(load-relative "examples/bernoulli-urn")
-(load-relative "examples/animal-tree")
+(load-relative "../examples/coin-flipping")
+(load-relative "../examples/bernoulli-urn")
+(load-relative "../examples/animal-tree")
 
 (load-relative "lazy-test")
 (load-relative "explicit-distributions-test")
 (load-relative "implicit-distributions-test")
 (in-test-group
  examples
- (load-relative "examples/die-rolling-test")
- (load-relative "examples/bernoulli-urn-test")
- (load-relative "examples/drunken-sailor-test")
- (load-relative "examples/geometric-test")
- (load-relative "examples/normalization-test")
- (load-relative "examples/math-problems-test")
- (load-relative "examples/coin-flipping-test")
- (load-relative "examples/animal-tree-test"))
+ (load-relative "../examples/die-rolling-test")
+ (load-relative "../examples/bernoulli-urn-test")
+ (load-relative "../examples/drunken-sailor-test")
+ (load-relative "../examples/geometric-test")
+ (load-relative "../examples/normalization-test")
+ (load-relative "../examples/math-problems-test")
+ (load-relative "../examples/coin-flipping-test")
+ (load-relative "../examples/animal-tree-test"))
 
 (define my-path (directory-namestring (current-load-pathname)))
 
@@ -66,13 +66,13 @@
 			  (with-working-directory-pathname
                            my-path
                            (lambda ()
-                             (load "examples/more-coin-flipping")
-                             (load "examples/more-animal-tree")))))
+                             (load "../examples/more-coin-flipping")
+                             (load "../examples/more-animal-tree")))))
   (register-test expl-group))
 
 (in-test-group
  explicit-distributions
- (load-relative "examples/more-animal-tree-impl-test"))
+ (load-relative "../examples/more-animal-tree-impl-test"))
 
 (let ((mltea-group (make-test-group 'mltea)))
   (tg:register-test! mltea-group
@@ -83,11 +83,11 @@
 			  (with-working-directory-pathname
                            my-path
                            (lambda ()
-                             (load "publications/mltea_talk/load")))))
+                             (load "../publications/mltea_talk/load")))))
   (set-tg:group-tear-down! mltea-group
 			   (lambda ()
                              (with-working-directory-pathname
                               my-path
                               (lambda ()
-                                (load "load-probscheme")))))
+                                (load "../load-probscheme")))))
   (register-test mltea-group))
