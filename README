@@ -16,16 +16,15 @@ all-tests.scm.
 If you happen to have rake installed, running rake will do that.
 
 The most interesting non-test code is in distribution.scm and
-implicit.scm, but other files loaded by load-probscheme.scm might be
-fun to read, too.
+implicit.scm, but other files loaded by load.scm might be fun to read,
+too.
 
 There are a fair number of tests of various degrees of interest in the
 examples/ directory, and in general tests are in files matching
 *-test.scm.
 
-The test suite is coded in a hand-rolled unit test framework, enclosed
-in the testing/ directory.  That is documented in pod format in the
-file testing/load.scm.
+The test suite is coded in a unit test framework called Test Manager,
+enclosed (as a submodule) in the testing/ directory.
 
 The most elaborate example is a program to play the game 'hangman', in
 examples/hangman.scm.  It may have some working directory dependence,
