@@ -24,7 +24,7 @@ require 'rake'
 task :default => :test
 
 task :test do 
-  sh %Q{mit-scheme --heap 6500 --batch-mode --load all-tests.scm --eval "(%exit num-non-successes)"}
+  sh %Q{mit-scheme --heap 6500 --batch-mode --load load-probscheme --load all-tests.scm --eval "(run-tests-and-exit)"}
 end
 
 LATEX_DIRS=%w{class-proposal class-report ita_talk oopsla_talk dls2007 mltea_talk}.map { |name| "publications/#{name}" }

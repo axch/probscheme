@@ -31,7 +31,6 @@
 
 (set! load/suppress-loading-message? #t) (newline)
 
-(load-relative "load-probscheme")
 (load-relative "testing/load")
 
 (load-relative "examples/coin-flipping")
@@ -52,6 +51,8 @@
  (load-relative "examples/coin-flipping-test")
  (load-relative "examples/animal-tree-test"))
 
+(define my-path (directory-namestring (current-load-pathname)))
+
 ;; This is twisted, but that's an artifact of lack of module system.
 ;; There does not currently seem to be any other way to run the same
 ;; tests against different implementations of the functions they test.
@@ -64,8 +65,11 @@
 			     '(examples animal-tree-test)))
   (set-tg:group-set-up! expl-group
 			(lambda ()
-			  (load-relative "examples/more-coin-flipping")
-			  (load-relative "examples/more-animal-tree")))
+			  (with-working-directory-pathname
+                           my-path
+                           (lambda ()
+                             (load "examples/more-coin-flipping")
+                             (load "examples/more-animal-tree")))))
   (register-test expl-group))
 
 (in-test-group
@@ -78,15 +82,14 @@
 			     '(examples animal-tree-test)))
   (set-tg:group-set-up! mltea-group
 			(lambda ()
-			  (load-relative "publications/mltea_talk/load")))
+			  (with-working-directory-pathname
+                           my-path
+                           (lambda ()
+                             (load "publications/mltea_talk/load")))))
   (set-tg:group-tear-down! mltea-group
 			   (lambda ()
-			     (load-relative "load-probscheme")))
+                             (with-working-directory-pathname
+                              my-path
+                              (lambda ()
+                                (load "load-probscheme")))))
   (register-test mltea-group))
-
-;; TODO This last vestige of execution really should vanish into the
-;; aether, either of the commandline runner or the emacs key whose
-;; meaning is 'load this file and run all the tests'.  For now,
-;; though, the define is necessary so that the commandline runner can
-;; extract whether or not the suite passed.
-(define num-non-successes (run-registered-tests))
