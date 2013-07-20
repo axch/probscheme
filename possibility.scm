@@ -99,9 +99,9 @@
         (density (possibility/density possibility)))
     (let ((mass (/ density (- 1 discarded-density))))
       (hash-table/modify! cache datum
+        (cons 0 0)
         (lambda (density.mass)
-          (cons (+ density (car density.mass)) (+ mass (cdr density.mass))))
-        (cons 0 0))
+          (cons (+ density (car density.mass)) (+ mass (cdr density.mass)))))
       (make-possibility datum mass))))
 
 (define (mass-impossibility impossibility cache discarded-density)

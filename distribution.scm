@@ -61,9 +61,9 @@
 (define (record-possibility possibility distribution)
   (hash-table/modify! (distribution/hash-table distribution)
       (possibility/datum possibility)
+    0
     (lambda (density)
-      (+ density (possibility/density possibility)))
-    0)
+      (+ density (possibility/density possibility))))
   (set-distribution/determined-density!
    distribution
    (+ (possibility/density possibility)
