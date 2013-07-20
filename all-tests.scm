@@ -17,8 +17,6 @@
 ;;; along with Probabilistic Scheme.  If not, see <http://www.gnu.org/licenses/>.
 ;;; ----------------------------------------------------------------------
 
-;; TODO Find a permanent solution to the library distribution
-;; problem.
 (define (self-relatively thunk)
   (if (current-eval-unit #f)
       (with-working-directory-pathname
