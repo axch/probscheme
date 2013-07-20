@@ -1,0 +1,9 @@
+Introduce
+- limit scope to discrete distributions
+- simple example
+- implementation concept
+- two languages (?) + query language
+
+Background
+- related work !
+- mathematics of what a distribution is ??

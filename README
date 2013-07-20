@@ -1,0 +1,38 @@
+---------------------------------------------------------------------------
+DISCLAIMER
+
+This is not production software in any sense of the word.  I am making
+it available as a companion to my paper, with the primary purpose of
+allowing someone else to see, in full gory detail, how that was
+implemented.  Any software release niceties you may find in this
+package, like documentation, are purely accidental.
+
+---------------------------------------------------------------------------
+INFORMATION
+
+To execute the test suite, get an MIT Scheme and load the file
+all-tests.scm.
+
+If you happen to have rake installed, running rake will do that.
+
+The most interesting non-test code is in distribution.scm and
+implicit.scm, but other files loaded by load-probscheme.scm might be
+fun to read, too.
+
+There are a fair number of tests of various degrees of interest in the
+examples/ directory, and in general tests are in files matching
+*-test.scm.
+
+The test suite is coded in a hand-rolled unit test framework, enclosed
+in the testing/ directory.  That is documented in pod format in the
+file testing/load.scm.
+
+The most elaborate example is a program to play the game 'hangman', in
+examples/hangman.scm.  It may have some working directory dependence,
+in order to find its data files.
+
+---------------------------------------------------------------------------
+CREDITS
+
+Implemented by Alexey Radul, Taylor Campbell, and Yu-hsin Chen.
+Maintained by nobody: read for your own edification, use at your own risk.

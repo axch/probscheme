@@ -1,0 +1,79 @@
+Title Slide:
+- Work I started this Spring in Gerry's class
+
+Outline Slide 1:
+- Structure of the talk
+
+Probability Theory:
+- Extension of logic, so one can reason even with incomplete information
+- Proven isomorphic to any theory that satisfies some natural
+  qualitative desiderata (real numbers, consistency, completeness)
+- Bayes Rule lets us infer causes from observing effects
+
+Inference is Useful:
+- lots of research, addressing lots of interesting AI problems
+
+Inference is Hard to Use:
+- buzzwords: belief propagation, variational methods, Gibbs sampling, MCMC
+- existing systems are domain-specific languages for using their particular
+  algorithms, but they are embedded badly, compose poorly, etc.
+
+Can we do better?
+
+We can try:
+- focus is not on an efficient inference algorithm (yet)
+- want a good domain-specific language for inference, not any one 
+  inference algorithm
+- constrain to discrete distributions because that's easier
+
+Lists:
+- alists or hashes of objects to probabilities
+- simple to implement
+- querying and iteration are ideal
+
+Lists lose on long tails:
+- Always lose if insist on exact answers
+
+Lazy Streams:
+- main idea: low probability things don't matter much in the end
+
+Approximation:
+- Best possible kind of approximation:
+  - Anytime
+  - Restartable
+  - Bounded-error
+
+Fine Print
+
+API:
+- The other question is the right API
+
+Is it Explicit Distribution Objects?
+- querying is pretty natural
+- modularity is pretty natural
+
+Combinators are pretty natural too
+
+But you get ugly code
+
+Implicit Distributions
+- nicer code
+- natural expression of many distributions
+
+But
+- querying? modularity?
+- the implicit distribution is global
+
+So which do you do?  The answer is, both!
+
+stochastic-thunk->distribution bridges the two worlds
+- semantics is rejection sampling
+- encapsulates nondeterminism
+- Need both languages for a decent system,
+  because explicit sucks at specifying complex distributions
+  and implicit sucks at modularity and querying
+
+
+- We can implement the implicit language in Scheme!
+
+

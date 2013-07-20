@@ -1,0 +1,556 @@
+\documentclass{beamer}
+
+% This file is a solution template for:
+
+% - Giving a talk on some subject.
+% - The talk is between 15min and 45min long.
+% - Style is ornate.
+
+
+
+% Copyright 2004 by Till Tantau <tantau@users.sourceforge.net>.
+%
+% In principle, this file can be redistributed and/or modified under
+% the terms of the GNU Public License, version 2.
+%
+% However, this file is supposed to be a template to be modified
+% for your own needs. For this reason, if you use this file as a
+% template and not specifically distribute it as part of a another
+% package/program, I grant the extra permission to freely copy and
+% modify this file as you see fit and even to delete this copyright
+% notice. 
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+\newcommand{\startor}{\left\{ \begin{array}{ll}}
+\newcommand{\stopor}{\end{array} \right.}
+\newcommand{\otherwise}{\textrm{otherwise}}
+
+\newcommand{\green}[1]{\textcolor{green}{#1}}
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+
+\mode<presentation>
+{
+  \usetheme{Warsaw}
+  % or ...
+
+  \setbeamercovered{transparent}
+  % or whatever (possibly just delete it)
+}
+
+
+\usepackage[english]{babel}
+% or whatever
+
+\usepackage[latin1]{inputenc}
+% or whatever
+
+\usepackage{times}
+\usepackage[T1]{fontenc}
+% Or whatever. Note that the encoding and the font should match. If T1
+% does not look nice, try deleting the line with the fontenc.
+
+
+\title[Probabilistic Scheme] % (optional, use only with long paper titles)
+{Report on the Probabilistic Language Scheme}
+
+%\subtitle
+%{Presentation Subtitle} % (optional)
+
+\author{Alexey Radul}
+% - Use the \inst{?} command only if the authors have different
+%   affiliation.
+
+\institute[MIT] % (optional, but mostly needed)
+{
+  Computer Science and Artificial Intelligence Laboratory\\
+  Massachusetts Institute of Technology
+}
+% - Use the \inst command only if there are several affiliations.
+% - Keep it simple, no one is interested in your street address.
+
+\date{ITA Hacker Talk, Oct 17th, 2007}
+
+\subject{Probability, Scheme}
+% This is only inserted into the PDF information catalog. Can be left
+% out. 
+
+
+
+% If you have a file called "university-logo-filename.xxx", where xxx
+% is a graphic format that can be processed by latex or pdflatex,
+% resp., then you can add a logo as follows:
+
+% \pgfdeclareimage[height=0.5cm]{university-logo}{university-logo-filename}
+% \logo{\pgfuseimage{university-logo}}
+
+
+
+% Delete this, if you do not want the table of contents to pop up at
+% the beginning of each subsection:
+\AtBeginSection[]
+{
+  \begin{frame}<beamer>
+    \frametitle{Outline}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+
+% If you wish to uncover everything in a step-wise fashion, uncomment
+% the following command: 
+
+%\beamerdefaultoverlayspecification{<+->}
+
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}
+  \frametitle{Outline}
+  \tableofcontents
+  % You might wish to add the option [pausesections]
+\end{frame}
+
+
+% Since this a solution template for a generic talk, very little can
+% be said about how it should be structured. However, the talk length
+% of between 15min and 45min and the theme suggest that you stick to
+% the following rules:  
+
+% - Exactly two or three sections (other than the summary).
+% - At *most* three subsections per section.
+% - Talk about 30s to 2min per frame. So there should be between about
+%   15 and 30 frames, all told.
+
+\section{Motivation and Overview}
+
+\subsection{Background}
+
+\begin{frame}
+  \frametitle{Probability Theory}
+  \framesubtitle{Reasoning Despite Uncertainty}
+
+  \begin{itemize}
+  \item Mathematical theory of plausible reasoning
+  \item Rules for concluding strength of belief in consequences
+  from strengths of belief in causes
+  \[ p(A \textrm{ and } B) = p(A) * p(B|A) = p(B) * p(A|B) \]
+  \item Consequently Bayes Rule
+  \[ p(B|A) = p(B) * p(A|B) / p(A) \]
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Probabilistic Inference}
+
+  Inference is the problem of actually carrying these calculations
+  out
+  \begin{itemize}
+  \item For some concrete collection of known distributions, and some concrete
+  collection of known evidence, we want to know the distributions that
+  information forces for various related unknowns
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Probabilistic Inference is Useful}
+
+  \begin{itemize}
+  \item for spam filtering, Sahami et al 1998
+  \item for robots driving through deserts, Thurn et al 2006
+  \item for studying gene expression, Segal et al 2001
+%  \only<2->{ \item for publishing papers, Radul 2007 }
+  \item and many, many more
+  \end{itemize}
+\end{frame}
+
+\subsection{The Problem}
+
+\begin{frame}
+  \frametitle{\ldots but Hard to Use in Practice}
+
+  \begin{itemize}
+  \item Inference algorithms are complicated, thus hard to write from scratch
+  \item Existing inference systems are a pain to use
+    \begin{itemize}
+    \item hew close to their assumptions
+    \item not modular
+    \item hard to interoperate with
+    \end{itemize}
+  \item Can we design a good domain-specific language for inference?
+  \end{itemize}
+\end{frame}
+
+\subsection{The Approach}
+
+\begin{frame}
+  \frametitle{An Inference Library for Scheme}
+
+  \begin{itemize}
+  \item an experiment in language design
+  \item explores the tension between programming convenience and
+  allowing efficient inference
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{If you were going to build your own inference library}
+  \framesubtitle{how would you do it?}
+
+  The main questions are:
+  \begin{itemize}
+  \item How to represent distributions?
+  \item How to create, combine, and manipulate distributions?
+  \item How to get answers out of distributions?
+  \end{itemize}
+\end{frame}
+
+\section{Big Idea 1: Lazy Computation}
+\subsection{Basic Operations}
+
+\begin{frame}
+  \frametitle{The Natural Literal Syntax for Distributions}
+  \framesubtitle{is an association list}
+
+  \code{(make-probability-distribution '(obj1 prob1) '(obj2 prob2) ...)}
+
+\end{frame}
+
+\begin{frame}[fragile=singleslide]
+  \frametitle{The Natural Literal Syntax for Distributions}
+  \framesubtitle{is an association list}
+  For example, the distribution for the results of rolling a fair die:
+\begin{verbatim}
+(define die-roll-distribution
+  (make-discrete-distribution
+   '(1 1/6) '(2 1/6) '(3 1/6)
+   '(4 1/6) '(5 1/6) '(6 1/6)))
+\end{verbatim}
+\end{frame}
+
+\begin{frame}
+  \frametitle{The Natural Combinators for Distributions}
+  \framesubtitle{follow the laws of probability theory}
+  Forward combination:
+  \[ p(x, y) = p(x) * p(y|x) \]
+  \pause
+  Life is easier if distributions are always over just one value,
+  so instead use
+  \[ p(\green{f}(x, y)) = \sum_{x', y' \textrm{ with } \green{f}(x', y') = \green{f}(x, y)} \red{p(x')} * \blue{p(y'|x')} \]
+  \pause
+  \code{(dependent-product \red{distribution} \blue{conditional} \green{combiner})}
+\end{frame}
+
+\begin{frame}[fragile=singleslide]
+  \frametitle{The Natural Combinators for Distributions}
+  \framesubtitle{follow the laws of probability theory}
+  For example, the distribution for rolling two dice can be constructed by:
+\begin{verbatim}
+(define two-die-roll-distribution
+  (dependent-product
+   die-roll-distribution
+   (lambda (result1)
+    ; The first die does not affect the second
+    die-roll-distribution)
+   +)) ; We want the sum of the faces
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{The Natural Combinators for Distributions}
+  \framesubtitle{follow the laws of probability theory}
+  Backward combination:
+\[ p(x|\blue{A(x)}) = \startor
+\red{p(x)} / p(\blue{A}) & \textrm{if $\blue{A(x)}$ is true} \\
+0 &                        \textrm{if $\blue{A(x)}$ is false} \\
+\stopor \]
+  \code{(conditional-distribution \red{distribution} \blue{predicate})}
+\end{frame}
+
+\begin{frame}[fragile=singleslide]
+  \frametitle{The Natural Combinators for Distributions}
+  \framesubtitle{follow the laws of probability theory}
+  For example, if we know someone rolled two dice and got more than 9:
+\begin{verbatim}
+(conditional-distribution
+ two-die-roll-distribution
+ (lambda (sum) (> sum 9)))
+\end{verbatim}
+\end{frame}
+
+\subsection{Naive Representation}
+
+\begin{frame}
+  \frametitle{A Naive Representation}
+  \framesubtitle{Association lists}
+
+  Represent distributions as association lists (or hash tables)
+  mapping objects to probabilities
+  \begin{itemize}
+  \item \code{conditional-distribution} is a filter followed by
+  a renormalization
+  \item \code{dependent-product} is straightforward too
+  \item querying can be ``what is the probability of this object?''
+  \item iteration can be ``run me through all object-probability pairs''
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{The Problem}
+  \framesubtitle{Long Tails}
+
+  Distributions with long tails waste computation on irrelevancies
+  \begin{itemize}
+  \item Possible parse trees of a sentence
+    \begin{itemize}
+    \item There are a vast number of them, but most are extremely unlikely
+    \end{itemize}
+  \item How many times will one flip heads on a fair coin before the first tail?
+    \begin{itemize}
+    \item Infinite, but again, the tail is probably irrelevant
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\subsection{Lazy Streams}
+
+\begin{frame}
+  \frametitle{The Solution, version 1}
+  \framesubtitle{Streams, in the SICP sense of the word}
+
+  Represent a distribution as a \alert{stream} of object-probability
+  pairs
+  \begin{itemize}
+  \item querying becomes "tell me the upper and lower bounds on the
+  probability of this object"
+  \item iteration becomes "give me the underlying stream"
+  \item also need "please compute some more, to bring the bounds closer together"
+  \item yields a restartable, bounded-error anytime approximation strategy
+  \item but \ldots
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{The Problem with the Solution}
+  \framesubtitle{Normalization}
+
+  \begin{itemize}
+  \item If a distribution is a list, you know the sum of the probabilities,
+  and can normalize them
+  \item If it's a stream, you won't know the sum until you get to the end
+    \begin{itemize}
+    \item Which may be never
+    \end{itemize}
+  \item If you condition, probability will disappear
+    \begin{itemize}
+    \item Making earlier objects more likely
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{The Solution, version 2}
+  \framesubtitle{Impossibilities}
+
+  The solution is to allow distinguished impossibilities in the stream
+  \begin{itemize}
+  \item An "impossibility" represents probability that disappears
+  to an unsatisfied predicate.
+  \item Keep a cache that remembers how much probability is gone and 
+  normalizes implicitly when asked about the bounds on the
+  probabilities of various objects.
+  \end{itemize}
+
+\end{frame}
+
+\section{Big Idea 2: Stochastic Functions}
+
+\subsection{Motivation}
+
+\begin{frame}
+  \frametitle{Defining Complex Distributions}
+
+  \begin{itemize}
+  \item \code{make-discrete-distribution} lets you make simple 
+  distributions you already know
+  \item then you can morph them with \code{dependent-product}
+  and \code{conditional-distribution}
+  \item but that gets really messy really fast
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile=singleslide]
+  \frametitle{Defining Complex Distributions}
+For example, the two dice from before took this code:
+\begin{verbatim}
+(define die-roll-distribution
+  (make-discrete-distribution
+   '(1 1/6) '(2 1/6) '(3 1/6)
+   '(4 1/6) '(5 1/6) '(6 1/6)))
+
+(let ((two-die-roll-distribution
+       (dependent-product
+        die-roll-distribution
+        (lambda (result1) die-roll-distribution)
+        +)))
+  (conditional-distribution
+   two-die-roll-distribution
+   (lambda (sum) (> sum 9))))
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}[fragile=singleslide]
+  \frametitle{Defining Complex Distributions}
+  It would be much nicer to write
+\begin{verbatim}
+(define (roll-die)
+  (discrete-select
+   (1 1/6) (2 1/6) (3 1/6)
+   (4 1/6) (5 1/6) (6 1/6)))
+
+(let ((num (+ (roll-die) (roll-die))))
+  (observe! (> num 9))
+  num)
+\end{verbatim}
+\end{frame}
+
+\subsection{Stochastic Function Language}
+
+\begin{frame}
+  \frametitle{Random Processes are Functions with Choices}
+  
+  Many distributions are naturally described as the results of 
+  some random process, perhaps with some additional known information
+  \begin{itemize}
+  \item Rolling dice is a process
+  \item Objects in the desert cause laser ranging data according to a process
+  \item Gene expression is a process, with some unseen choices, that 
+  eventually leads to the observed microarray data
+  \item So you'd like to be able to write these processes down naturally:
+    \begin{itemize}
+    \item As functions
+    \item that make some ``unseen'' decisions 
+    \end{itemize}
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{The Primitives of Choices}
+
+  \begin{itemize}
+  \item \code{discrete-select} introduces stochastic choices
+  \item \code{observe!} constrains previous choices with observations
+  \item \code{stochastic-thunk->distribution}
+  takes a thunk implementing a random process and
+  returns the distribution on that thunk's return values
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile=singleslide]
+  \frametitle{Rolling Dice, Again}
+
+\begin{verbatim}
+(define (roll-die)
+  (discrete-select
+   (1 1/6) (2 1/6) (3 1/6)
+   (4 1/6) (5 1/6) (6 1/6)))
+
+(stochastic-thunk->distribution
+ (lambda ()
+   (let ((num (+ (roll-die) (roll-die))))
+     (observe! (> num 9))
+     num)))
+\end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile=singleslide]
+  \frametitle{Flipping Coins}
+  \framesubtitle{the easy way}
+
+\begin{verbatim}
+(define (num-flips-until-tail)
+  (discrete-select
+   (0 1/2)
+   ((+ 1 (num-flips-until-tail)) 1/2)))
+
+(stochastic-thunk->distribution
+ num-flips-until-tail)
+\end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile=singleslide]
+  \frametitle{Flipping Coins}
+  \framesubtitle{the hard way}
+
+\begin{verbatim}
+(define (coin-flipping-distribution)
+  (dependent-product
+   (make-discrete-distribution
+    '(tails 1/2) '(heads 1/2))
+   (lambda (symbol)
+     (if (eq? symbol 'tails)
+         (make-discrete-distribution (list 0 1))
+         (coin-flipping-distribution)))
+   (lambda (first-flip num-other-flips)
+     (if (eq? first-flip 'tails)
+         0
+         (+ 1 num-other-flips)))))
+\end{verbatim}
+\end{frame}
+
+%% \begin{frame}
+%%   \frametitle{How It Actually Works}
+%%   \framesubtitle{call-with-current-continuation is your friend}
+
+%%   \begin{itemize}
+%%   \item \code{stochastic-thunk->distribution} sets up a search schedule
+%%   to remember choice points, options, and probabilities of reaching
+%%   each
+%%   \item every \code{discrete-select} is a choice point
+%%     \begin{itemize}
+%%     \item captures its continuation, its options,
+%%     and the probability of reaching it and saves them on the schedule, then
+%%     asks the scheduler to try a branch
+%%     \end{itemize}
+%%   \item trying a branch consists of invoking the continuation of a 
+%%   choice point with the next option
+%%     \begin{itemize}
+%%     \item first do the bookkeeping: the probability of reaching the next
+%%     choice point is the probability of reaching this one times the 
+%%     probability of choosing that option
+%%   \end{itemize}
+%%   \item \code{observe!}\ aborts the current branch
+%% \end{frame}
+
+
+\section*{Summary}
+
+\begin{frame}
+  \frametitle<presentation>{Summary}
+
+  % Keep the summary *very short*.
+  \begin{itemize}
+  \item \alert{Lazy Streams} make a good underlying representation for
+  discrete probability distributions
+  \item \alert{Stochastic Functions} make a good way to define
+  discrete probability distributions
+  \end{itemize}
+  
+\end{frame}
+
+
+\end{document}
+
+

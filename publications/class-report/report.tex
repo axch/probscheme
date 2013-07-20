@@ -1,0 +1,920 @@
+\documentclass[12pt]{article}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\todo}[1]{\textbf{*** {#1} ***}}
+\newcommand{\defn}[1]{\textbf{#1}}
+
+\newcommand{\startor}{\left\{ \begin{array}{ll}}
+\newcommand{\stopor}{\end{array} \right.}
+\newcommand{\otherwise}{\textrm{otherwise}}
+\newcommand{\concept}[1]{\textit{#1}}
+
+%% This is a trick I found on the Web for putting verbatim
+%% environments inside footnotes.
+\newenvironment{Footnote}{\footnote\bgroup}{\egroup}
+
+\title{Report on the Probabilistic Language Scheme}
+\author{Taylor Campbell \and Yu-hsin ``Joyce'' Chen \and Alexey Radul}
+\date{May 14, 2007}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Probabilistic reasoning is a cornerstone of modern research in
+artificial intelligence, but has historically been constrained to
+special-purpose toolkits.  We demonstrate an embedding of general
+discrete probabilistic computation into Scheme.  We augment Scheme
+with primitives for describing distributions as the possible results
+of nondeterministic programs.  We provide a library for manipulating
+and querying an explicit representation of distributions as normal
+Scheme records.  The nondeterminism is controlled and modular,
+allowing abstractions that use Probabilistic Scheme internally to play
+well with each other and with the rest of Scheme, and allowing
+Probabilistic Scheme to take advantage of existing Scheme
+functionality without reimplementing it.
+\end{abstract}
+
+\section{Introduction}
+\label{introduction}
+
+Probabilistic Scheme is a library for, and embedding of, probabilistic
+computation\footnote{We limited the scope of the project to distributions over
+discrete, countable possibility spaces.} into Scheme.
+By ``probabilistic computation'' we chose to mean ``manipulation of
+probability distributions.''  A probability distribution, in this
+context, is a belief about the value that an expression could have
+when evaluated in some environment.  Suppose, for example, that I were
+about to roll a mathematically perfect six-sided die.  Then you should
+believe that each of the six faces is equally likely to come up as the
+final result, and no other results are possible.
+This belief is a \defn{probability distribution}, which
+assigns probability one-sixth to each of the faces of the die.
+Suppose, then, that I rolled the die but concealed the result from
+you.  Your belief about the result remains that same distribution.
+Suppose, then, that you asked me the parity of the result and I
+informed you that the number rolled on the die were odd.  Then,
+assuming you had no doubts about my perceptiveness or veracity, your
+belief about the result of the roll would change to one that assigned
+probability one-third to each of the faces with odd numbers, and zero
+to the others.
+
+An embedding of probabilistic computation is the ability to represent
+such beliefs, from the simple to the complex; to compute their
+transformations; and to extract definite, quantitative information
+from them.  As a preview, the beliefs in the preceding paragraph can
+be represented as follows
+\begin{verbatim}
+(define die-roll-distribution
+  (make-discrete-distribution '(1 1/6) '(2 1/6) '(3 1/6)
+                              '(4 1/6) '(5 1/6) '(6 1/6)))
+
+(define odd-die-roll-distribution
+  (conditional-distribution die-roll-distribution odd?))
+
+(distribution/determine! odd-die-roll-distribution)
+(distribution/datum-probability odd-die-roll-distribution 1)
+;Value: 1/3
+\end{verbatim}
+
+Conceptually, distributions in Probabilistic Scheme are lists of the
+possibilities, and the probabilities assigned to them.  If some object
+does not appear in the list, its probability is zero.  To permit large
+(or infinite) distributions which are not needed in their entirety at
+any one time, this is actually a stream of possibilities.  The
+representation of probability distributions be further detailed in
+Section~\ref{querying} and Section~\ref{implementation}.
+
+Probabilistic Scheme offers two ``languages'' for creating and
+transforming distributions.  There is a language for explicitly
+creating and manipulating objects that represent probability
+distributions, described
+in Section~\ref{explicit}.  There is also a language for constructing
+a probability distributions by writing nondeterministic
+Scheme programs, described in Section~\ref{implicit}.
+The explicit language is easier for programmers to think about,
+because there are no weird control structures or strange
+nondeterministic programs, but the nondeterministic language is better suited
+to defining complex distributions, because it makes the structure of
+the distribution being defined much clearer and its expression much
+more natural.
+
+Probabilistic Scheme also offers a language for querying distributions
+to extract definite information from them.  This turns out to be
+somewhat nontrivial, and is discussed in Section~\ref{querying}.  We
+discuss our implementation of these languages in
+Section~\ref{implementation} and summarize the things we did and did
+not do in Section~\ref{discussion}.  First, though, some background,
+in Section~\ref{mathematics}.
+
+\section{Background and Mathematics}
+\label{mathematics}
+
+As a matter of mathematics, a probability distribution over some set
+$X$ of possible values is a state of knowledge about the veracity of
+all propositions $A_x$ of the form ``the true value is $x$'', for all
+$x$ in $X$.  In the example of an unobserved roll of a mathematically
+perfect die, the set $X$ consists of the six possible outcomes, and
+the distribution assigns (in this case equal) probabilities to each of
+the six propositions about which outcome proved the true one.  The
+elements $x$ of $X$ are by definition distinct, so the propositions
+$A_x$ are mutually exclusive.  We further require the set $X$ to
+contain all possible values, so the propositions $A_x$ are exhaustive.
+This has the consequence that the sum of the probabilities assigned to
+these propositions must be 1.  For a detailed treatment of probability
+in general and distributions in particular, we refer the interested
+reader to Jaynes~\cite{jaynes}.  For some more details related to
+the precise mathematical foundations of the present work, we refer
+the reader to Appendix~\ref{math-details}.
+
+The closest modern relative to Probabilistic Scheme is an OCaml-based
+stochastic programming language called iBAL~\cite{pfeffer01ibal}.
+Probabilistic Scheme differs from iBAL in being an embedding of
+inference into an existing programming language, rather than a
+programming language in its own right, permitting Probabilistic Scheme
+to benefit from all of the extant Scheme constructs.
+The stochastic distribution sublanguage of Probabilistic Scheme owes
+a great intellectual debt to the idea of the \code{amb} operator
+(see, e.g.~\cite{sicp}).  Our current best ideas about
+ways to make the inference actually efficient strongly resemble
+the Value Elimination algorithm~\cite{bacchus03value}.
+
+\section{Stochastic Language}
+\label{implicit}
+
+Probabilistic Scheme embeds probabilistic computation by allowing 
+Scheme expressions to have uncertain values, and maintaining an 
+implicit probability distribution over what those values might be.
+The primitives for handling implicit distributions are
+\begin{itemize} 
+\item \code{discrete-select} introduces uncertainty
+\item \code{observe!}\ constrains the implicit distribution
+\item \code{stochastic-thunk->distribution} encloses a nondeterministic
+computation and returns the implicit distribution explicitly.
+\end{itemize}
+
+\begin{verbatim}
+(discrete-select possibility ...)
+\end{verbatim}
+
+Takes any number of literal two-element lists representing object-probability
+pairs.
+Returns one of the objects, implicitly distributed according to the
+distribution specified by the probabilities, which are expected to 
+sum to 1.  The evaluation of each object is deferred until it
+needs to be returned.
+
+As expressions combine, their implicit distributions transform according
+to the rules of probability theory.  For example,
+we can 
+\begin{verbatim}
+(define (roll-die)
+  (discrete-select (1 1/6) (2 1/6) (3 1/6)
+                   (4 1/6) (5 1/6) (6 1/6)))
+\end{verbatim}
+Then every call to the \code{(roll-die)} function will return one of
+the numbers from 1 through 6, implicitly uniformly distributed.  In
+that case, the expression \code{(cons (roll-die) (roll-die))} returns
+one of the 36 cons cells that have one of those numbers in the car
+slot and one in the cdr slot, also implicitly uniformly distributed.
+The expression \code{(+ (roll-die) (roll-die))} will return one of the
+numbers from 2 through 12, implictly distributed according to the
+probability of getting that sum when rolling two fair six sided dice.
+
+These rules of combination apply to the pure-functional subset of 
+Scheme.  If one should mix \code{discrete-select} with side-effects,
+the results are unspecified.
+
+\begin{verbatim}
+(observe! boolean)
+\end{verbatim}
+
+Modifies the current implicit distribution by conditioning
+it on the argument being true.  Returns an unspecified value.
+
+Consider, for example, the expression
+\begin{verbatim}
+(let ((face (roll-die))) ;; Line 1
+  (observe! (> face 2))  ;; Line 2
+  face)                  ;; Line 3
+\end{verbatim}
+In line 1, the expression \code{(roll-die)} returns one of the numbers
+from 1 through 6, implicitly unformly distributed.  \code{Let} then
+binds it to the name \code{face}, whose value is then implicitly
+uniformly distributed over 1 through 6.  The expression \code{(> face
+2)} on line 2 has one of the values \code{\#t}, \code{\#f}, implicitly
+distributed as 2/3 for \code{\#t} and 1/3 for \code{\#f}.
+\code{Observe!}\ modifies this implicit distribution to require
+\code{\#t}.  This modifies the implicit distribution for \code{face}
+to be consistent with \code{(> face 2)} returning \code{\#t}, that is
+it conditions $p(\code{face})$ on \code{(> face 2)}.  The
+distribution of return values from this whole \code{let} form is then
+$p(\code{face}|\code{(> face 2)})$, in other words uniform over the
+numbers from 3 through 6.
+
+\begin{verbatim}
+(stochastic-thunk->distribution thunk)
+\end{verbatim}
+
+Returns, as an explicit probability distribution, the implicit 
+distribution over the possible return values of the given thunk.
+
+To continue the example above,
+\code{(stochastic-thunk->distribution roll-die)} would return an
+explicit probability distribution object that represented the
+distribution that assigns equal mass to the six numbers from 1 through
+6.  \code{Stochastic-thunk->distribution} captures and contains the
+nondeterminism occurring inside its argument thunk and perfectly
+deterministically returns an object representing a probability
+distribution.\begin{Footnote}Nondeterministic computations can be nested: 
+\begin{verbatim}
+(stochastic-thunk->distribution
+ (lambda ()
+   (discrete-select
+    ((stochastic-thunk->distribution
+      (lambda () (discrete-select ('heads 1/2) ('tails 1/2)))) 1/5)
+    ((stochastic-thunk->distribution
+      (lambda () (discrete-select (1 1/3) (2 1/3) (3 1/3)))) 4/5))))
+\end{verbatim}
+will return an explicit probability distribution weighted 1/5 to 4/5,
+whose two data are two different explicit probability
+distributions.\end{Footnote}
+
+\section{Explicit Distribution Language}
+\label{explicit}
+
+As well as specifying distributions with nondeterministic
+thunks given to \code{stochastic-thunk->distribution}, one can create
+and operate on explicit probability distributions directly.  The
+primitives\footnote{Actually, \code{distribution-select} is enough for
+everything, because the stochastic language can readily represent these
+operations.  This list is primitive in the sense that these operations
+are a sufficient base even without reference to the stochastic
+language.} for handling explicit distributions are
+\begin{itemize}
+\item \code{make-discrete-distribution} creates an explicit probability
+distribution from a list of possibilities
+\item \code{dependent-product} combines two distributions according to
+the Product Law
+\item \code{conditional-distribution} transforms a distribution
+by conditioning it on a predicate
+\item \code{distribution-select} makes an explicit distribution
+implicit
+\end{itemize}
+Probabilistic Scheme also offers several derivable combinators that
+operate on explicit distributions, capturing common non-primitive
+operations.  They are documented in Appendix~\ref{library}.
+
+\begin{verbatim}
+(make-discrete-distribution possibility ...)
+\end{verbatim}
+
+Interprets each possibility argument as a two-element list of an object
+and its probability.  Returns the probability distribution that assigns
+those probabilities to those objects, and zero to all others.
+Expects the set of possibilities to be normalized, i.e.\ for the 
+given probabilities to sum to 1.
+
+\begin{verbatim}
+(dependent-product distribution function combiner)
+\end{verbatim}
+
+A distribution $p(y|X)$ that depends on the value of some variable
+$X$ can be represented as a function of $X$ that, when given any
+particular value $x$, returns the distribution $p(y|X=x)$.  Given a
+distribution $p(x)$ and such a function \code{(lambda (x)
+p(y|X=x))}, \code{dependent-product} returns the distribution
+$p(x,y) = p(x)p(y|X=x)$.  Instead of
+trying to represent a distribution over multiple values,
+\code{dependent-product} takes a combiner to apply to the values $x$
+and $y$, to return $p(\code{(combiner x y)})$.  An oft-useful
+combiner is \code{cons}, though the right summation will happen
+if the combiner maps multiple pairs to the same combined value.
+
+\begin{verbatim}
+(conditional-distribution distribution predicate)
+\end{verbatim}
+
+Given a distribution $p(x)$ and a predicate $A(x)$, returns the distribution
+over $x$'es that satisfy the predicate: $p(x|A(x)$ is true$)$, which
+is given by 
+\[ p(x|A(x)) = \startor
+p(x) / p(A) &    \textrm{if $A(x)$ is true} \\
+0 &              \textrm{if $A(x)$ is false} \\
+\stopor \]
+where $p(A)$ is the probability that $A$ is true.  Since the $x$'es are
+mutually exclusive and exhaustive, we know that
+
+\[ p(A) = \sum_{x:A(x)} p(x). \]
+
+The behavior of the system is unspecified if the predicate $A(x)$ is
+impossible to satisfy.  Without further effort, this implementation
+will naturally tend either to enter an infinite loop if the underlying
+stream is infinite, or fail with a divide-by-zero error if it is
+finite.
+
+\begin{verbatim}
+(distribution-select distribution)
+\end{verbatim}
+
+Returns one of the possible values from the given explicit
+distribution, implicitly distributed according thereto.
+
+For example, \code{roll-die}, above, could have been defined as
+\begin{verbatim}
+(define (roll-die)
+  (distribution-select
+   (make-discrete-distribution '(1 1/6) '(2 1/6) '(3 1/6)
+                               '(4 1/6) '(5 1/6) '(6 1/6))))
+\end{verbatim}
+
+\section{Querying Distributions}
+\label{querying}
+
+Probability distributions are occasionally infinite, and often
+technically finite but large enough that we do not wish to compute
+them fully.  Consequently, Probabilistic Scheme sports a lazy
+representation of distributions.  On initial creation, a distribution
+is a completely unforced stream of possibilities, each of which names
+a value and some amount of probability that the distribution assigns
+to it.  On user request, this internal stream can be (partially)
+forced, whereupon the distribution object caches the assignments that
+came out of it.  Therefore, at any one time, a distribution will have
+some cache of the possibilities that came out of the stream so far,
+which it can use to answer questions, and an upper bound on the amount
+of probability remaining in the rest of the stream.
+
+It is convenient to permit the internal stream of a distribution
+to emit impossibilities as well as possibilities.  An impossibility
+has the meaning that some amount of probability ``vanishes,'' in
+which case the distribution object implicitly renormalizes.
+
+\subsection{Questions}
+
+Here is how explicit probability distributions can be queried without
+further forcing:
+
+\begin{verbatim}
+(distribution? thing)
+\end{verbatim}
+
+Returns \code{\#t} if the given thing is an object explicitly
+representing a probability distribution, and \code{\#f} otherwise.
+
+\begin{verbatim}
+(distribution/determined? distribution)
+\end{verbatim}
+
+Returns whether the given distribution object has already been fully
+determined, as opposed to having more computation it could do to
+further refine its internal representation of the distribution it
+represents.
+
+\begin{verbatim}
+(distribution/undetermined-mass distribution)
+\end{verbatim}
+
+Returns the amount of probability mass that remains in the unforced
+segment of the internal assignment stream in this distribution.
+
+\begin{verbatim}
+(distribution/datum-min-probability distribution datum)
+(distribution/datum-max-probability distribution datum)
+(distribution/datum-probability distribution datum)
+\end{verbatim}
+
+Return bounds on the probability that the given datum could have in
+this distribution.  The minimum value will be realized if all the
+remaining undetermined mass goes to other data.  The maximum value
+will be realized if all the remaining undetermined mass goes to this
+datum.  The unqualified function will signal an error if any 
+undetermined mass remains, because then the probability of the 
+datum is as yet unknown.
+
+\subsection{Forcing}
+
+Here is how explicit probability distribution objects can be asked to
+perform more of their computations:
+
+\begin{verbatim}
+(distribution/refine! distribution)
+\end{verbatim}
+
+Runs the computation in the given distribution for the smallest
+detectable increment, which is either until a possibility is
+discovered or until some undetermined mass is lost to an
+impossibility.  In the former case, the \code{min-probability} of the
+datum of the discovered possibility increases, and the
+\code{max-probability} of every other datum decreases.  In the latter
+case the \code{min-probability} of every discovered datum increases
+and the \code{max-probability} of every datum decreases, unless there
+could be only one datum.  The \code{undetermined-mass} decreases
+unless no data have yet been found, in which case it remains 1.
+
+If the distribution computation has been finished, i.e.\ no
+undetermined mass remains, \code{distribution/refine!}\ does nothing
+and returns \code{\#f}.  If \code{distribution/refine!}\ changed
+something, it returns \code{\#t}.  Higher-level forcing functions can
+be built by iterating \code{distribution/refine!}\ for some desired
+amount of time or until some desired condition has been met.
+
+\begin{verbatim}
+(distribution/determine! distribution)
+\end{verbatim}
+
+Runs the computation in the given distribution all the way to the end.
+Useful primarily for testing.
+
+\begin{verbatim}
+(distribution->density-stream distribution)
+\end{verbatim}
+
+Returns a stream of the possibilities in the given distribution.  The
+stream is permitted to contain impossibilities and repeated data at
+the discretion of the underlying implementation.  This is an effective
+way to iterate over all the possibilities of a distribution, without
+requiring it to compute any beyond those that the client deems
+interesting.  The returned stream starts with values from the
+distribution's cache, but will begin to force the distribution's
+internal stream when necessary (which forcing will be correctly cached
+for future access).
+
+\section{Implementation}
+\label{implementation}
+
+\subsection{Distributions}
+
+A distribution is a record containing four components:
+
+\begin{itemize}
+
+ \item a lazy stream of possibilities and impossibilities to be taken
+   into the distribution;
+
+ \item a hash table mapping the data that we have encountered so far
+   to their respective densities;
+
+ \item a measure of what information we have not yet determined from
+   the stream, the \concept{undetermined density}; and
+
+ \item a measure of what possibilities we have discarded, the
+   \concept{discarded density}.
+
+\end{itemize}
+
+A distribution records `density' and not `probability' because we
+ internally draw a distinction between \concept{density} and
+ \concept{mass}.
+Density is the number associated with each possibility and
+ impossibility.
+The sum of all densities of possibilities and impossibilities in a
+ distribution must sum to 1, so the density of the possibilities may
+ not sum to 1.
+Consequently, to derive a meaningful probability from a distribution
+ for clients, we consider not the \emph{density} but the \emph{mass}.
+The mass is the normalized density: to query a distribution for a
+ datum's probability, which we internally call its mass, we divide its
+ density by the distribution's normalization constant --- one minus
+ the discarded density.
+
+In order to determine the upper and lower bounds of probability for a
+ datum, we consider two cases: that all of the undetermined density
+ will go to the datum, or that none of it will.
+Thus, to find the maximum probability (mass) of some datum in a
+ distribution, we divide the sum of its density and the undetermined
+ density by the normalization constant; to find the minimum, we divide
+ only its density by the normalization constant, since none of the
+ undetermined density is assumed to go to the datum.
+
+The lazy stream allows us to incrementally refine the distribution.
+As the stream is forced, the elements are recorded in the
+ distribution; possibilities are stored in the hash table, and
+ densities of impossibilities are added to the discarded density
+ field.
+
+Streams additionally permit a convenient method of operating on
+ distributions element-wise.
+All of the distribution combinators, such as \code{map-distribution},
+ are defined on the streams from distributions.
+\code{Distribution->density-stream} creates a stream that contains
+ first all of the possibilities in a distribution's hash table,
+ followed by the distribution's stream.
+
+\subsection{Stochastic Language Implementation}
+
+The stochastic language's \code{discrete-select} is implemented
+ similarly to \code{amb}.
+At every point in the search tree of non-deterministic, or stochastic,
+ choices, however, we record the probability that we reached that
+ point, multiplying for every successive point down the tree.
+
+The stochastic computation is searched with a parameterized schedule
+ that allows us to choose different search strategies.
+By default, the schedule is stored in a stack, yielding a simple
+ depth-first search.
+If we substitute a queue for the stack, we obtain a breadth-first
+ search.
+We could also use a priority queue, choosing the most probable options
+ first, as a simple heuristic for a kind of best-first search.
+
+From a program expressed as a stochastic computation, using
+ \code{discrete-select}, we can obtain a stream of the possibilities
+ and impossibilities of that computation with non-local control
+ operators.
+\code{Call-with-current-continuation} saves the state of every choice
+ point in the computation, which the scheduler sends every possible
+ datum in the choice to.
+By keeping an explicit schedule of the choices, we can suspend it
+ mid-way and continue if desired.
+Most importantly, once a stochastic program has yielded one possible
+ datum and the probability (density) of reaching that datum, we can
+ use that possibility and remember the state of the stochastic
+ computation and the remaining choices.
+Then we can lazily try branches incrementally as we desire, and
+ produce a lazy stream of all of the possibilities and impossibilities
+ in the stochastic computation, from which we can build a
+ distribution.
+
+\section{Discussion and Future Work}
+\label{discussion}
+
+Through Probabilistic Scheme, we have learned how to offer a nice
+interface for embedding probabilistic reasoning into a full, practical
+programming language.  We have created a proof-of-concept
+implementation demonstrating that this interface is reasonable, and
+does not require the creation of new programming languages from
+scratch.  We further foresee ways that this system could, with some
+further thought and engineering, actually become practically useful.
+
+The further thought in question breaks down along the following lines:
+\begin{itemize}
+\item How useful is searching possibilities best-first,
+and what ways are there that the user could supply search heuristics?
+\item Numerical roundoff error is important since extremely small
+numbers are known to arise in the practice of probabilistic computation.
+What are the right techniques for dealing with it?
+\item Can we discover no-good sets of discrete selections
+and avoid them in some dependency directed manner?
+\item What are the right decision-theoretic constructs that naturally 
+force distributions only as far as is useful?
+\item Can Probabilistic Scheme be extended to continuous probability
+distributions?
+\item Can Probabilistic Scheme be extended to reasoning over
+first-order and other more general propositions, rather than just
+distributions?
+\end{itemize}
+For the interested reader, these questions are all elaborated more
+carefully in Appendix~\ref{future}.
+
+\appendix
+
+\section{Nonprimitive Explicit Combinators}
+\label{library}
+
+\begin{verbatim}
+(map-distribution distribution function)
+\end{verbatim}
+
+Given the distribution $p(x)$ and the function $f$ returns the 
+distribution $p(f(x))$.  \code{Map-distribution} could have been
+implemented as
+\begin{verbatim}
+(define (map-distribution distribution function)
+  (dependent-product
+   distribution
+   (lambda (thing)
+     (make-discrete-distribution `(,(function thing) 1)))
+   (lambda (orig mapped) mapped)))
+\end{verbatim}
+
+\begin{verbatim}
+(independent-product distribution-a distribution-b combiner)
+\end{verbatim}
+
+Given the distributions $p(x)$ and $p(y)$, returns
+the joint $p(x,y) = p(x) \cdot p(y)$, assuming $x$ and $y$
+to be independent.  \code{Independent-product} could have been 
+implemented as
+\begin{verbatim}
+(define (independent-product distribution-a distribution-b combiner)
+  (dependent-product distribution-a
+                     (lambda (datum)
+                       datum            ;ignore
+                       distribution-b)
+                     combiner))
+\end{verbatim}
+
+\begin{verbatim}
+(mixture . options)
+\end{verbatim}
+
+Given a list of distributions and weights as two-element lists in the
+arguments, returns the mixture over those distributions with those
+weights.  \code{Mixture} could have been implemented as
+
+\begin{verbatim}
+(define (mixture . options)
+  (let ((meta-distribution (apply make-discrete-distribution options)))
+    (dependent-product
+     meta-distribution
+     (lambda (distribution) distribution)
+     (lambda (distribution datum)
+       distribution   ;ignore
+       datum))))
+\end{verbatim}
+
+\begin{verbatim}
+(bayes-rule prior-distribution likelihood-function)
+\end{verbatim}
+
+Given a prior distribution $p(h)$ and a likelihood function
+\code{(lambda (h) ...)}, which presumably implements $p(d|h)$ for
+some data $d$ the programmer has in mind, returns the posterior over
+$h$ given that likelihood:
+\[ p(h|d) = \frac{p(h) \cdot p(d|h)}{p(d)},\ \ \ 
+p(d) = \sum_{h'} p(d|h') \cdot p(h'). \]
+\code{Bayes-rule} could have been implemented as
+
+\begin{verbatim}
+(define (bayes-rule prior-distribution likelihood-function)
+  (let ((product
+	 (dependent-product
+	  prior-distribution
+	  (lambda (datum)
+	    (bernoulli-distribution (likelihood-function datum)))
+	  cons)))
+    (map-distribution (conditional-distribution product cdr) car)))
+\end{verbatim}
+
+\subsection{Some Standard Distributions}
+
+\begin{verbatim}
+(define (bernoulli-distribution #!optional probability)
+  (if (default-object? probability) (set! probability 1/2))
+  (make-discrete-distribution `(#t ,probability) `(#f ,(- 1 probability))))
+
+(define (uniform-distribution objects)
+  (alist->distribution
+   (let ((mass (/ 1 (length objects))))
+     (map (lambda (thing) (cons thing mass))
+	  objects))))
+
+(define die-roll-distribution
+  (uniform-distribution '(1 2 3 4 5 6)))
+
+(define (geometric-select alpha start)
+  (discrete-select
+   (start alpha)
+   ((geometric-select alpha (+ start 1)) (- 1 alpha))))
+\end{verbatim}
+
+\section{Mathematical Details}
+\label{math-details}
+
+Recall our operational definition of a probability distribution over some set
+$X$ of possible values as a state of knowledge about the veracity of
+all propositions $A_x$ of the form ``the true value is $x$'', for all
+$x$ in $X$.
+Provided the set $X$ of possibilities does, in fact, contain all the
+possibilities, it makes no difference how large it is, in that if some
+putative values $x$ happen to be in $X$ but to also be impossible, our
+knowledge simply assigns probability zero to the corresponding
+propositions $A_x$, and no harm is done.  We can therefore take $X$ to
+be the set of all possible Scheme objects, and dispense with worrying
+about it.\footnote{Technically, for ``all Scheme objects'' to form a
+set, we must specify an equality predicate by which to compare them,
+and say that we are not interested in the distinctions, if any,
+between different Scheme objects that compare equal according to the
+chosen predicate.  We have not considered this question in
+extraordinary depth, but have defaulted to choosing \code{equal?}\ as
+the predicate in question.  Our implementation supports
+user-specification of different equality predicates where opportune,
+but we have not tested that feature very carefully.}
+
+Further, distributions are always dependent on some collection of
+knowledge and information that is taken for granted.  In the case of
+the die from before, that knowledge consists of the assertion that the
+die is, in fact, mathematically perfect (and cannot land on edge,
+cannot be hit by a truck before landing, etc); that it has, in fact,
+been rolled; and that we are interested only in the number on the face
+that was showing when it landed, and not various details of its
+trajectory, or final resting location.  This information suffices to
+constrain the probabilities of all outcomes besides the six numbers to
+zero.  If we further add the piece of information that the situation
+is symmetric with respect to interchanging the numbers written on the
+die, we can safely conclude that the distribution over the
+possibilities must be the uniform distribution over the six numbers.
+This conditioning knowledge is not explicitly represented by
+Probabilistic Scheme, but left implicit in the structure of programs
+using probability distributions.
+
+This formulation is subtly different from the direct interpretation of
+probability theory as an extension of logic to uncertainty.  It is a
+subset, in that distributions can be viewed as collections of
+propositions, and as such obey the rules of probabilistic
+manipulation.  It is also not such a limited subset, because the
+probability of many a proposition can be captured as the probability
+of \code{\#t} in the distribution over values of a Boolean expression
+computing that proposition.  It is not, however, equivalent, because
+many propositions, such as ``there is no greatest real number,'' are
+expressible and perfectly well-defined but do not have corresponding
+expressions that can be evaluated to produce truth values.  The
+distinction deserves notice, but an exploration of symbolic inference
+on propositions without reduction to evaluable expressions is beyond
+the scope of the present work.
+
+\section{Detailed Future Work}
+\label{future}
+
+\subsection{Search Strategies}
+\label{search}
+We have not actually measured the performance effect of using our
+best-first search instead of depth-first.  Further, it is interesting
+to think about how the user might be able to supply heuristics to turn
+the best-first into a true $A^*$.  We envision a primitive for the
+stochastic language that looks like \code{(best-case-density!\ 1/20)},
+which would mean that the user knows that the current branch of
+computation will retain at most 1/20 of the probability it now has
+(and lose the rest to impossibilities).  Given such hints, the
+best-first search could delay exploration of doomed branches and
+preferentially pursue promising ones.
+
+\subsection{Numerical Issues}
+\label{numerical}
+
+Doing all one's arithmetic in exact numbers has the problem that the
+denominators grow without bound.  Moreover, the acceptable inaccuracy
+in answers introduced by not finishing one's computations easily
+swamps the errors that are inherent in a floating point representation
+of probabilities.  It would be nice, therefore, to come up with a
+scheme for effective use of inexact representations of probabilities.
+If, however, one's distributions are conditioned on fairly unlikely
+evidence (as happens in practice when one observes that some
+particular large dataset actually occurred), one's probabilities
+become the ratios of very small densities to very small normalization
+constants.  Should this occur, avoiding roundoff errors in the
+computations of those densities and normalization constants becomes of
+paramount importance.  In extreme cases, which are not actually that
+rare in practice, it may even be
+that one's densities and normalization constants are too small to be
+represented by floating point numbers at all.  A good probabilistic
+reasoning system should be able to deal with this contingency by, for
+example, carrying its computations out in log-space, with appropriate
+care to avoid problems with log-space roundoff error.
+
+\subsection{Dependency Directed Backtracking}
+\label{ddb}
+
+Dependency-directed backtracking should prove most helpful in pruning
+our search spaces and more effectively avoiding contradictions.  Even
+more promising, though we are still a little fuzzy on this, this idea
+should be extendable into the probabilistic domain.  It should be
+possible to discover various independence properties, and reuse
+instead of recomputing.  For example, dependency tracking should be
+able to discover that the first \code{(roll-die)} result in the
+expression \code{(cons (roll-die) (roll-die))} is independent of the
+second, and reuse the same distribution for every value of the first
+instead of recomputing every time.  In this example, that doesn't save
+much, but if we had something more complicated than just a die roll to
+deal with, the savings could be impressive.  The Value Elimination
+algorithm from \cite{bacchus03value} is roughly like this.
+
+\subsection{Decision Theory}
+\label{decision}
+
+The primitives Probabilistic Scheme offers for extracting
+information from distributions are ad-hoc and do not address the
+essence of uncertain reasoning.  They are ad-hoc in that their
+specification depends on the idea of representing distributions as
+partially computed collections of pairs of data and probabilities.
+They are not essential in a deeper sense: Probability distributions
+are states of knowledge, and knowledge is not an accessible thing in
+its own right.  We interact with the knowledge of others, and perhaps
+even ourselves, only through actions.  Actions differ from beliefs in
+that they have consequences, and are chosen by their agents not only
+on the basis of Truth but also on the basis of the agent's desires.
+Consequently, it is reasonable, instead of demanding Truth from our
+computers, to ask them to act based on their beliefs, and tell them
+what they should desire.  This can, of course, be reduced to the
+previous statement by asking the program to desire to report the Truth
+in all its detail, but perhaps much computational work can be saved by
+instead requesting a decision that is easier to make, but still
+fulfils our ultimate objective.
+
+Decision theory is a branch of mathematics that has a word to say
+about all this handwaving and philosophy.  I do not know how
+thoroughly it has been elaborated by the theoriticians, but they seem
+at least to have figured out the right way to handle single,
+irreversible decisions with easily predictable consequences.  The
+corresponding primitive would look something like \code{(decide
+options knowledge utility-function)} where \code{options} represents all
+the possible decisions, \code{knowledge} is a probability distribution
+that represents all the (relevant) knowledge about the world, and
+\code{utility-function} is a procedure of two arguments that can be
+evaluated on an option (from the option set) and a possible state of
+the world (from the knowledge distribution) to return how good that
+option would be if that state of the world were actually true.  The
+return from such a \code{decide} call would be the correct decision to
+make (to wit, the one that maximizes the expected utility).  The possible
+computational savings from formulating output in this manner instead
+of asking for exact values of probabilities of objects is that the
+knowledge distribution need only be forced far enough to prove that
+some option is, in fact, the best, and the details of how much various
+others are worse can be left uncomputed.\footnote{Doing this seems to
+require some knowledge about the utility function.  If one has any
+probability mass left undetermined, no matter how little, it is
+possible that it might lead to some unusual world state, that causes
+nothing in particular if one takes the decision that otherwise appears
+best, but causes an enourmous gain given some other
+choice.  If the utility function is such that this kind of event is
+possible, then one is stuck forcing the knowledge all the way to
+convince oneself that this scenario does not occur (or react if it
+does).  If, on the other hand, one had, for example, a global upper
+bound on the delta-utility across decisions, one could in principle prove
+some decision best despite having some probability mass left
+undetermined.  Then one could refrain from computing which world
+states that mass went to, which could be a major computational savings
+if that mass were distributed among a very large number of
+(consequently very unlikely) world states.  While such a setup may
+sound bizarre at first, the real world does seem to be roughly like
+this, in that most phenomena have some small number (often one) of
+reasonably likely explanations, but if one is willing to entertain
+tales of the wildly implausible, it is possible to concoct a boundless
+variety of coincidences that would produce the observed result.
+Humans seem not to spend all their time in contemplation of such
+ludicrosities, perhaps because they know that they cannot lead to
+sufficiently large, sufficiently probable swings in utility to be
+worth considering.  Similar considerations can also apply to the 
+possible decisions, in that there could feasibly be a great many 
+decisions that are technically possible but obviously useless, and
+it would be nice to be able not to consider them at all.}
+
+\subsection{Continuous Distributions}
+\label{continuous}
+
+Discrete probability
+distributions are those that can be completely characterized by
+(perhaps countably infinite) lists of possibilities.  Mathematical
+probability distributions are more general than that, however.  There
+is no mathematical difficulty with specifying a probability
+distribution over an uncountable domain $X$ by specifying a function
+$f$ from $X$ to the reals, under the two constraints that $f$ be
+everywhere nonnegative and that the integral $\int_X f$ be equal to 1.
+If $f$ has a convenient symbolic representation, for example like the
+famous Gaussian $f(x) = \frac{1}{\sqrt{2\pi}}\exp\{-\frac{x^2}{2}\}$, then
+it is possible to reason about the distribution symbolically, and
+derive all manner of interesting facts about it.  Such symbolic
+distributions are composable, and there is no principled reason why
+one could not write a computer program to do for symbolic continuous
+distributions roughly what Probabilistic Scheme already does for
+discrete ones, despite the impossibility of creating an exhaustive
+list of all possible values.
+
+In point of fact, the difference between continuous and discrete
+distributions is not an uncrossable chasm.  We illustrate with an
+example: Suppose one started with a Gaussian prior distribution on the
+value of some unobserved parameter $\theta$, and an imperfect detector
+for $\theta$.  Suppose the detector always turns red if $\theta$
+exceeds 5, but turns red unpredicatbly 10\% of the time even when
+$\theta$ does not exceed 5.\footnote{No real detector would have such
+a discontinuous boundary, but we may be uninterested in modeling the
+detector's complex behavior in the immediate vicinity of $\theta =
+5$.}  Suppose that the detector has turned red.  What is the correct
+posterior distribution over possible values of $\theta$?  It is
+discontinuous at $\theta = 5$, and in each of the regions $\theta > 5$
+and $\theta < 5$, it is proportional to the old Gaussian, but with
+coefficients differing by a factor of 10.  This new distribution no
+longer has the same beautiful symbolic representation as the original
+Gaussian did, in that it includes a discrete enumeration of options.
+On the other hand, this is not a strictly discrete distribution either,
+in that it still permits an uncountable number of possible values of
+$\theta$.
+
+What form then unifies the continuous and the discrete, and accounts
+for the hybrid in the preceding example?  Here is one idea: How about
+a finite or countable list of symbolic probability functions, together
+with their domains?  The hybrid in the preceding paragraph is such a
+list.  Nice symbolic distributions are special cases of this where the
+length of the list is 1.  Completely discrete distributions such as
+Probabilistic Scheme handles are special cases of this where the
+functions are all delta functions.  This is an interesting topic for
+further thought and perhaps implementation.
+
+\subsection{Nonconstructive Inference}
+\label{nonconstructive}
+
+A yet different but perhaps related branch of probabilistic inference
+in general is dealing with non-constructive propositions.  If one
+believes that all greeks are human, and that all humans are mortal,
+then one ought to believe that all greeks are mortal.  None of these
+propositions, however, are computationally checkable, for it is not
+practical to examine all greeks or all humans, past, present and future.
+On the other hand, it \emph{is} possible to reason about such
+propositions, have some beliefs about them, deduce and confirm or
+refute their consequences, etc.  Another interesting topic for future
+thought.
+
+\bibliography{report}
+\bibliographystyle{plain}
+
+\end{document}

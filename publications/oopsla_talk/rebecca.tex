@@ -1,0 +1,494 @@
+\documentclass{beamer}
+
+% This file is a solution template for:
+
+% - Giving a talk on some subject.
+% - The talk is between 15min and 45min long.
+% - Style is ornate.
+
+
+
+% Copyright 2004 by Till Tantau <tantau@users.sourceforge.net>.
+%
+% In principle, this file can be redistributed and/or modified under
+% the terms of the GNU Public License, version 2.
+%
+% However, this file is supposed to be a template to be modified
+% for your own needs. For this reason, if you use this file as a
+% template and not specifically distribute it as part of a another
+% package/program, I grant the extra permission to freely copy and
+% modify this file as you see fit and even to delete this copyright
+% notice. 
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+\newcommand{\startor}{\left\{ \begin{array}{ll}}
+\newcommand{\stopor}{\end{array} \right.}
+\newcommand{\otherwise}{\textrm{otherwise}}
+
+\newcommand{\green}[1]{\textcolor{green}{#1}}
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+
+\mode<presentation>
+{
+  \usetheme{Warsaw}
+  % or ...
+
+  \setbeamercovered{transparent}
+  % or whatever (possibly just delete it)
+}
+
+
+\usepackage[english]{babel}
+% or whatever
+
+\usepackage[latin1]{inputenc}
+% or whatever
+
+\usepackage{times}
+\usepackage[T1]{fontenc}
+% Or whatever. Note that the encoding and the font should match. If T1
+% does not look nice, try deleting the line with the fontenc.
+
+
+\title[Probabilistic Scheme] % (optional, use only with long paper titles)
+{Report on the Probabilistic Language Scheme}
+
+%\subtitle
+%{Presentation Subtitle} % (optional)
+
+\author{Alexey Radul}
+% - Use the \inst{?} command only if the authors have different
+%   affiliation.
+
+\institute[MIT] % (optional, but mostly needed)
+{
+  Computer Science and Artificial Intelligence Laboratory\\
+  Massachusetts Institute of Technology
+}
+% - Use the \inst command only if there are several affiliations.
+% - Keep it simple, no one is interested in your street address.
+
+\date{DLS 2007, Oct 22nd}
+
+\subject{Probability, Scheme}
+% This is only inserted into the PDF information catalog. Can be left
+% out. 
+
+
+
+% If you have a file called "university-logo-filename.xxx", where xxx
+% is a graphic format that can be processed by latex or pdflatex,
+% resp., then you can add a logo as follows:
+
+% \pgfdeclareimage[height=0.5cm]{university-logo}{university-logo-filename}
+% \logo{\pgfuseimage{university-logo}}
+
+
+
+% Delete this, if you do not want the table of contents to pop up at
+% the beginning of each subsection:
+%% \AtBeginSection[]
+%% {
+%%   \begin{frame}<beamer>
+%%     \frametitle{Outline}
+%%     \tableofcontents[currentsection]
+%%   \end{frame}
+%% }
+
+
+% If you wish to uncover everything in a step-wise fashion, uncomment
+% the following command: 
+
+%\beamerdefaultoverlayspecification{<+->}
+
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}
+  \frametitle{Outline}
+  \tableofcontents
+  % You might wish to add the option [pausesections]
+\end{frame}
+
+
+% Since this a solution template for a generic talk, very little can
+% be said about how it should be structured. However, the talk length
+% of between 15min and 45min and the theme suggest that you stick to
+% the following rules:  
+
+% - Exactly two or three sections (other than the summary).
+% - At *most* three subsections per section.
+% - Talk about 30s to 2min per frame. So there should be between about
+%   15 and 30 frames, all told.
+
+\section{Motivation}
+
+\subsection{Background}
+
+\begin{frame}
+
+\begin{center}
+\Huge Probability theory exists:
+\end{center}
+
+  \[ p(A \textrm{ and } B) = p(A) * p(B|A) = p(B) * p(A|B) \]
+
+  \[ p(B|A) = p(B) * p(A|B) / p(A) \]
+
+\end{frame}
+
+\begin{frame}
+
+  {\huge
+    Probabilistic inference is useful
+  }
+
+  \begin{itemize}
+  \item for spam filtering, Sahami et al 1998
+  \item for robots driving through deserts, Thrun et al 2006
+  \item for studying gene expression, Segal et al 2001
+%  \only<2->{ \item for publishing papers, Radul 2007 }
+  \item and many, many more
+  \end{itemize}
+\end{frame}
+
+\subsection{The Problem}
+
+\begin{frame}
+  
+  {\huge \ldots but hard to use}
+
+  \begin{itemize}
+  \item algorithms are complicated
+  \item existing systems are a pain to use
+    \begin{itemize}
+    \item hew close to their assumptions
+    \item not modular
+    \item hard to interoperate with
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\Huge Can we do better?
+\end{center}
+\end{frame}
+
+\subsection{The Approach}
+
+\begin{frame}
+
+\vspace{0.40in}
+\begin{center}
+\Huge We can try
+\end{center}
+
+\pause
+  \begin{itemize}
+  \item library for Scheme
+  \item experiment in language design
+  \end{itemize}
+\end{frame}
+
+\section{Representation}
+
+\begin{frame}
+\begin{center}
+\Huge First big question:
+\end{center}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\Huge Representation?
+\end{center}
+\end{frame}
+
+\subsection{Lists?}
+
+\begin{frame}
+\begin{center}
+\Huge Lists?
+\end{center}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\Huge Lists lose on long tails
+\end{center}
+\end{frame}
+
+\begin{frame}
+
+  {\huge Long tails}
+
+  \begin{itemize}
+  \item possible parse trees of a sentence
+    \begin{itemize}
+    \item There are a vast number of them, but most are extremely unlikely
+    \end{itemize}
+  \item how many times will one flip heads on a fair coin before the first tail?
+    \begin{itemize}
+    \item Infinite, but again, the tail is probably irrelevant
+    \end{itemize}
+  \item and many, many more
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\Huge So?
+\end{center}
+\end{frame}
+
+\subsection{Lazy Streams}
+
+\begin{frame}
+\begin{center}
+\Huge Lazy Streams
+\end{center}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\Huge Lazy Streams
+\end{center}
+\begin{itemize}
+\item Delay computing the long tail
+\item You likely won't need it anyway
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\Huge Approximation,
+\end{center}
+\pause
+but the best kind:
+\begin{itemize}
+\item anytime
+\item restartable
+\item bounded-error
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\Huge There's also some fine print
+\end{center}
+\tiny
+The streams need to allow duplicates. \\
+The streams need to allow explicit statements of impossibility. \\
+The objects exiting the streams need to be cached. \\
+The caches need to be kept up to date \\
+Even in the face of aliasing and direct access to the streams. \\
+If you really want to know, ask during the question period.
+
+\only<-1>{ \vspace{0.733in} }
+\only<2->{
+\begin{center}
+\Huge But it all works out
+\end{center} }
+\end{frame}
+
+\section{Interface}
+
+\begin{frame}
+\begin{center}
+\Huge Second big question:
+\end{center}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\Huge API?
+\end{center}
+\end{frame}
+
+\subsection{Explicit Distributions?}
+
+\begin{frame}
+\begin{center}
+\Huge Explicit Distribution Objects?
+\end{center}
+\end{frame}
+
+\begin{frame}
+
+  \[ p(\green{f}(x, y)) = \sum_{x', y' \textrm{ with } \green{f}(x', y') = \green{f}(x, y)} \red{p(x')} * \blue{p(y'|x')} \]
+  \code{(dependent-product \red{distribution} \blue{conditional} \green{combiner})}
+
+\[ p(x|\blue{A(x)}) = \startor
+\red{p(x)} / p(\blue{A}) & \textrm{if $\blue{A(x)}$ is true} \\
+0 &                        \textrm{if $\blue{A(x)}$ is false} \\
+\stopor \]
+  \code{(conditional-distribution \red{distribution} \blue{predicate})}
+
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\Huge Looks ok, but...
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile=singleslide]
+\begin{verbatim}
+(define die-roll-distribution
+  (make-discrete-distribution
+   '(1 1/6) '(2 1/6) '(3 1/6)
+   '(4 1/6) '(5 1/6) '(6 1/6)))
+
+(let ((two-die-roll-distribution
+       (dependent-product
+        die-roll-distribution
+        (lambda (result1) die-roll-distribution)
+        +)))
+  (conditional-distribution
+   two-die-roll-distribution
+   (lambda (sum) (> sum 9))))
+\end{verbatim}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\Huge Instead:
+\end{center}
+\end{frame}
+
+\subsection{Implicit Distributions?}
+
+\begin{frame}[fragile=singleslide]
+\begin{verbatim}
+(define (roll-die)
+  (discrete-select
+   (1 1/6) (2 1/6) (3 1/6)
+   (4 1/6) (5 1/6) (6 1/6)))
+
+(let ((num (+ (roll-die) (roll-die))))
+  (observe! (> num 9))
+  num)
+\end{verbatim}
+\begin{center}
+\Huge Implicit Distributions?
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile=singleslide]
+\begin{verbatim}
+(define (roll-die)
+  (discrete-select
+   (1 1/6) (2 1/6) (3 1/6)
+   (4 1/6) (5 1/6) (6 1/6)))
+
+(let ((num (+ (roll-die) (roll-die))))
+  (observe! (> num 9))
+  num)
+\end{verbatim}
+\begin{center}
+\Huge Querying?  Modularity?
+\end{center}
+\end{frame}
+
+\subsection{The Answer}
+
+\begin{frame}
+\begin{center}
+\Huge Answer:
+\end{center}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\Huge Both!
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile=singleslide]
+\begin{verbatim}
+(define (roll-die)
+  (discrete-select
+   (1 1/6) (2 1/6) (3 1/6)
+   (4 1/6) (5 1/6) (6 1/6)))
+
+(stochastic-thunk->distribution
+ (lambda ()
+   (let ((num (+ (roll-die) (roll-die))))
+     (observe! (> num 9))
+     num)))
+\end{verbatim}
+\end{frame}
+
+\section*{Contributions}
+
+\begin{frame}
+
+\begin{center}
+{\Huge Contributions}
+\end{center}
+\large
+  \begin{itemize}
+  \item Representation: \alert{Lazy Streams}
+  \item API: \alert{Stochastic Functions} AND \alert{Explicit Objects}
+  \end{itemize}
+  
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\Huge Another example:
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile=singleslide]
+
+\begin{center}
+{\Huge Flipping Coins} \\
+The easy way
+\end{center}
+
+\begin{verbatim}
+(define (num-flips-until-tail)
+  (discrete-select
+   (0 1/2)
+   ((+ 1 (num-flips-until-tail)) 1/2)))
+
+(stochastic-thunk->distribution
+ num-flips-until-tail)
+\end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile=singleslide]
+
+\begin{center}
+{\Huge Flipping Coins} \\
+The hard way
+\end{center}
+
+\begin{verbatim}
+(define (coin-flipping-distribution)
+  (dependent-product
+   (make-discrete-distribution
+    '(tails 1/2) '(heads 1/2))
+   (lambda (symbol)
+     (if (eq? symbol 'tails)
+         (make-discrete-distribution '(0 1))
+         (coin-flipping-distribution)))
+   (lambda (first-flip num-further-flips)
+     (if (eq? first-flip 'tails)
+         0
+         (+ 1 num-further-flips)))))
+\end{verbatim}
+\end{frame}
+
+
+\end{document}
+
+

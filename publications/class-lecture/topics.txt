@@ -1,0 +1,25 @@
+This program is like a molecule: It is cohesive, but consists of
+distinct atoms; and each atom has an extremely dense central idea, and
+a bunch of obvious supporting fluff.  But without the fluff, the
+program would fall apart.
+
+Discrete distributions are like amb
+Just need to carry around the arithmetic
+
+Also want an explicit representation; streams are good for that.
+(Want impossibilities in the stream, and normalize at query time).
+
+Map from implicit stuff to explicit stuff is via a walker, then
+walker->streamer, (even streams are nice; care is needed to avoid dumb
+loss of tail recursion) then a cache in front of the stream that
+collapses repeated outputs (including impossibilities) (and allows
+lookup by value).  Synching the cache uses a nice trick with letrec.
+
+Explicit to implicit works too.
+
+The explicit-implicit dichotomy, and the lessons each teaches about
+what you want in the other is a very nice exercise in language design.
+
+The distinction I make between mass and density
+
+The stream picture, and the cache, etc.

@@ -1,0 +1,354 @@
+\documentclass[12pt]{article}
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{Probabilistic Scheme}
+\author{Alexey Radul \and Yu-hsin ``Joyce'' Chen}
+\date{April 12, 2007}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We envision embedding probabilistic inference into Scheme.  This
+consists of the ability to specify probability distributions
+conditioned on the ubiquitous ``background information'' or on the
+truths of propositions mentioned in other distributions; to compute
+with them according to the rules of probability theory; and to extract
+the results of those computations.  We have a prototype of the 
+specification, accompanied by a naive implementation, and propose
+to improve it in an interesting way.
+\end{abstract}
+
+There are $N$ components to a good embedding of inference into Scheme.
+Those we thought of are presented in a topological sort order below,
+one per section.
+The first two sections below deal with the specification of
+distributions, considering first a specification language where all
+the distributions are explicit, and then one where they are largely
+implicit.  Sections 3 through 5 concern themselves with implementing
+computation: Section~\ref{naive} describes a naive implementation, and
+what's wrong with it; Section~\ref{ddb} discusses improving the
+implementation by adding dependency directed backtracking; and
+Section~\ref{lazy} considers the benefits of laziness.
+Section~\ref{decision} muses on the extraction of answers from the
+inference process, why that's an interesting problem in itself, and
+what might be good ways to do it.  Finally, the remainder of the
+document ties up some loose ends.
+
+\section{Explicit Distributions}
+\label{explicit}
+
+The problem of embedding probabilistic inference is easiest to
+understand by considering the situation where all probability
+distributions are specified explicitly.  We propose to create the
+primitives
+\begin{itemize}
+\item \code{make-discrete-distribution}
+\item \code{distribution-product}
+\item \code{prob-map}
+\item \code{condition-on}
+\end{itemize}
+for manipulating explicit probability distributions.  Their meanings
+are best discussed by example:  The definition
+\begin{verbatim}
+(define (die-roll)
+  (make-discrete-distribution '(1 1/6) '(2 1/6) '(3 1/6)
+                              '(4 1/6) '(5 1/6) '(6 1/6)))
+\end{verbatim}
+has the meaning: On the background information $I$ that states that
+this program is not broken, the possible outcomes (that we care about)
+of a die roll (as represented by the \code{die-roll} function) are the six
+numbers 1, 2, 3, 4, 5, and 6.  For each separate roll D and number
+$1 \leq i\leq 6$, the probability that the roll D yields the number i
+is
+
+\[ p( \code{(die-roll)} = i | I) = \frac{1}{6}. \]
+
+Then, the definition\footnote{\code{independent-product} is
+implemented in terms of the more fundamental primitive
+\code{distribution-product} that does not assume independence.
+\code{
+(define (independent-product dist1 dist2)
+  (distribution-product dist1 (lambda (ignore) dist2)))
+}}
+\begin{verbatim}
+(define (two-dice)
+  (independent-product (die-roll) (die-roll)))
+\end{verbatim}
+represents a probability distribution over the possible pairs of
+results of two independent die rolls:
+
+\[ p( \code{(two-dice)} = i, j | I) =
+   p( \code{(die-roll)} = i | I) * p( \code{(die-roll)} = j | I) \]
+
+Then we can
+\begin{verbatim}
+(define (die-sum)
+  (prob-map (lambda (pair) (+ (car pair) (cdr pair)))
+            (two-dice)))
+\end{verbatim}
+to represent the transformed distribution\footnote{This is a little cheat.
+The pair $i, j$ is
+represented as a cons cell in the example by inertia rather than due
+to a careful consideration.  In principle the distribution object
+could remember the pair as such, and pass two arguments to the lambda,
+as in \code{(prob-map (lambda (d1 d2) (+ d1 d2)) (two-dice))}, but
+that's approximately the same thing, and we don't want to hammer out
+the differences and determine the Right Way just now.}
+\[ p( \code{(die-sum)} = k | I) = \sum_{i, j | i + j = k} p( \code{(two-dice)} = i, j | I) \]
+and
+\begin{verbatim}
+(define (dice-summing-to k)
+  (condition-on (two-dice)
+                (lambda (pair)
+                  (= k (+ (car pair) (cdr pair))))))
+\end{verbatim}
+to represent the conditional distribution
+\[ p( \code{(dice-summing-to k)} = i, j | I ) =
+   p( \code{(two-dice)} = i, j | \code{(= k (+ i j))}, I). \]
+
+\section{Implicit Intermediate Distributions}
+\label{implicit}
+
+The preceding language is clunky.  Every operation requires an 
+explicit call to some function that manipulates
+probability distributions, and requires one to supply an explicit
+procedure that accepts the
+objects being distributed over.  It would be nice to have a
+more natural way to specify distributions and their combinations.  In
+many cases, it is natural to think of probability distributions as
+functions or processes that return ``random'' values, and leave the
+distributions that arise inside those processes implicit.  We propose
+to create the primitives
+\begin{itemize}
+\item \code{discrete-select}
+\item \code{observe!}
+\item \code{with-probabilistic-choices}
+\end{itemize}
+for describing such processes without explicitly specifying all the
+intermediate probability distributions.  In these terms, the
+\code{dice-summing-to} function from the above example becomes
+
+\begin{verbatim}
+(define (roll-die)
+  (discrete-select '(1 1/6) '(2 1/6) '(3 1/6)
+                   '(4 1/6) '(5 1/6) '(6 1/6)) ;; dist A
+) ;; dist B
+
+(define (dice-summing-to k)
+  (with-probabilistic-choices
+    (lambda ()
+      (let ((x (roll-die))
+            (y (roll-die)))       ;; dist C, on x, y
+        (observe! (= k (+ x y)))  ;; dists D1 on (+ x y), D2 on (= ... )
+        ;; dist E on x, y
+        (cons x y)))              ;; dist F, on (cons x y)
+  ))
+\end{verbatim}
+
+Here, all of the intermediate probability distributions (those
+preceding the return of \code{dice-summing-to}) are implicit.  There
+are implicit (identical) distributions A, B over the return values of
+\code{discrete-select} and \code{roll-die}, respectively.  There is an
+implicit distribution C over the pairs of values bound to \code{x} and
+\code{y} by the \code{let}.  There is a (different!) implicit
+distribution E over the pairs of values held by \code{x} and \code{y}
+after the \code{observe!}\ has been called.  There are implicit
+distributions D1 and D2 on the values of the expressions \code{(+ x
+y)} and \code{(= k (+ x y))}, respectively.  There is an implicit
+distribution F over the return values of the \code{(lambda () ... )}.
+The only explicit distribution is the return value of
+\code{with-probabilistic-choices}, which converts the implicit
+distribution F into an identical explicit distribution and returns it.
+
+This seems to be a much more natural way to think about many (if
+not all) probability distributions, at least until global properties
+of the distribution as a whole, such as the actual probability of some
+result totalled over all possible ways to reach it, become important.
+
+\section{Naive Implementation}
+\label{naive}
+
+Explicit probability distributions could (naively) be implemented as,
+say, association lists from their objects to the probabilities of
+those objects.  The explicit manipulation operations can then be 
+implemented fairly directly by list munging.  
+The machinery for implicit probability distributions
+could be implemented with an \code{amb}-like structure:
+\code{discrete-select} is like \code{amb}, \code{observe!}\ is like
+\code{require}, and \code{with-probabilistic-choices} is like
+\code{amb-collect-values}.  The probabilistic versions would need to
+do a little more bookkeeping, but the basic idea is the same, and they
+could be implemented with, say, depth-first search.  We have a 
+prototype\footnote{It works, it hasn't broken yet, but it is neither
+optimized for constant factors nor carefully checked for possible
+errors.} system following this strategy that implements an incarnation
+of the primitives discussed above.
+
+This implementation strategy is naive for two reasons.  First, both
+the list-munging explicit operations and the depth-first-search
+implicit operations will often do too much work because they cannot
+take advantage of the logical structure of the distributions they are
+computing.  Second, they are forced by their nature to consider and
+account for all possible (i.e.\ probability greater than zero)
+outcomes, which is wasteful if many of the outcomes have very low
+probability.  Ways to address both of these concerns are detailed
+below.
+
+\section{Dependency Directed Backtracking}
+\label{ddb}
+
+The first problem with the naive implementation is that the search is
+just depth-first (or just breadth-first, if we like that better).  It
+can be speeded up by somehow discovering no-good sets of assignments
+and avoiding them in the usual dependency directed manner.  We are
+still a little fuzzy on this, but this idea should be further
+extendable into the probabilistic domain.  It should be possible to
+discover various independence properties, and reuse instead of
+recomputing.  For example, dependency tracking should be able to
+discover that the \code{(roll-die)} result that gets bound to \code{y}
+above is independent of the one that gets bound to \code{x}, and reuse
+the same distribution for every \code{x} instead of recomputing every
+time.  In this example, that doesn't save much, but if we had
+something more complicated than just a die roll to deal with, the
+savings could be impressive.
+
+\section{Best-First Search and Lazy Distributions}
+\label{lazy}
+
+The second problem with the naive implementation is that the search
+traverses the entire space of all possible (i.e.\ probability greater
+than zero) answers before producing a distribution.  This is wasteful
+--- if one is trying to decide whether to bring an umbrella, it
+suffices to know that there is at least an 80\% chance of rain of one
+form or another, and one is not really interested in whether the other
+20\% go to sunshine or coulds or snow or hail or other ways to produce
+rain.  This means that much work can be saved by first exploring the
+most probable outcomes by some form of best-first search, and stopping
+the exploration once enough information has been gathered for the
+present purpose.  On the other hand, it is incorrect to simply discard
+the possibilities one chose not to elaborate, because if, having
+brought an umbrella, one starts feeling not drops of water but cold,
+hard things impacting on one's face, the probability for rain
+plummets, and it becomes appropriate to explore the other
+possibilities to infer whether it is snowing or hailing and what to do
+about it.
+
+In view of this consideration, \code{with-probabilistic-choices},
+\code{product}, \code{prob-map}, and friends ought to return
+probability distribution objects that know how to do just enough work
+to answer the immediate questions put to them, and how to go back and
+do more work as new circumstances or new questions demand.
+
+\section{Decision Theory}
+\label{decision}
+
+There is a sense in which probabilities and inference are not, in and
+of themselves, quite enough for a complete, principled reasoning
+system.  You may have perhaps noticed that the notion of ``output'' is
+conspicuous by its absence from the preceding discussion.  Naively,
+the output one might want from a probability distribution is the
+probability of some object.  Unfortunately, computing that exactly
+requires, in principle, computing the entire probability distribution
+in full, and that defeats the entire purpose of making our
+distributions lazy.  One could, of course, have primitives like
+\code{(bounds-on-probability-of object distribution)} that would return the
+smallest and largest probability that some object could have under a
+given distribution, in the current state of knowledge about it
+(i.e.\ without requiring the doing of any more work by the lazy
+inference engine); and \code{(ensure-known-well-enough object dist
+tolerance)} that would force the lazy distribution to work until the
+difference between the upper and lower bound on the probability of the
+object fell below the tolerance.  These are, however, ad-hoc, and in a
+sense not entirely appropriate.  Probability distributions are states
+of belief.  It is not entirely fair to demand from our computers that
+they report their states of belief accurately and precisely, for we
+cannot make such reports to each other.  The only access we have to
+the beliefs of others (and perhaps even ourselves) is through 
+actions.  Actions differ from beliefs in that they have consequences,
+and are chosen by their agents not only on the basis of Truth but also
+on the basis of the agent's desires.  Consequently, it is reasonable,
+instead of demanding Truth from our computers, to ask them to act
+based on their beliefs, and tell them what they should desire.  This
+can, of course, be reduced to the previous statement by asking the
+program to desire to report the Truth in all its detail, but perhaps
+much computational work can be saved by instead requesting a decision
+that is easier to make, but still fulfils our ultimate objective.
+
+Decision theory is a branch of mathematics that has a word to say
+about all this handwaving and philosophy.  I do not know how
+thoroughly it has been elaborated by the theoriticians, but they seem
+at least to have figured out the right way to handle single,
+irreversible decisions with easily predictable consequences.  The
+corresponding primitive would look something like \code{(decide
+options knowledge loss-function)} where \code{options} represents all
+the possible decisions, \code{knowledge} is a (lazy) probability
+distribution that represents all the (relevant) knowledge about the
+world, and \code{loss-function} is a procedure of two arguments that
+can be evaluated on an option (from the option set) and a possible
+state of the world (from the knowledge distribution) to return how bad
+that option would be if that state of the world were actually true.
+The return from such a decide call would be the correct decision to
+make (to wit, the one that minimizes the expected loss).  The possible
+computational savings from formulating output in this manner instead
+of asking for exact values of probabilities of objects is that the
+knowledge distribution need only be forced far enough to prove that
+some option is, in fact, the best, and the details of how much various
+others are worse can be left uncomputed.
+
+Doing this seems to require some knowledge about the loss function.
+If one has any probability mass left not accounted for, no matter how
+little, it is possible that it might lead to some unusual world state,
+that causes an enourmous loss if one takes the decision that otherwise
+appears best, while not causing any extraordinary problems for some
+other choice.  If the loss function is such that this kind of event is
+possible, then one is stuck forcing the knowledge all the way to
+convince oneself that this scenario does not occur (or react if it
+does).  If, on the other hand, one had, for example, a global upper
+and lower bound on the loss, one could in principle prove some
+decision best despite having some probability mass left not accounted
+for.  Then one could refrain from computing which world states that
+mass went to, which could be a major computational savings if that
+mass were distributed among a very large number of (consequently very
+unlikely) world states.  While such a setup may sound bizarre at
+first, the real world does seem to be roughly like this, in that most
+phenomena have some small number (often one) of reasonably likely
+explanations, but if one is willing to entertain tales of the wildly
+implausible, it is possible to concoct a boundless variety of
+coincidences that would produce the observed result.  Humans seem not
+to spend all their time in contemplation of such ludicrosities,
+perhaps because they know that they cannot lead to sufficiently large,
+sufficiently probable swings in utility to be worth considering.
+
+\section{Continuous Distributions}
+
+So far, this document has been living in a completely discrete world,
+where all choices could be composed together from sequences of choices
+among small numbers of discrete alternatives.  There is a wonderful
+world of real numbers and continuous quantities out there, and
+facilities for dealing with it are an important feature request of any
+serious probabilistic inference system.
+
+\section{Trying It}
+
+The use case here presented is obviously a toy.  It would be good to
+see what issues come up when this system is used for solving a larger
+and more complex problem.  Such come in two varieties: Either the
+reimplementation of some interesting bit of inference that has already
+been done, or the exploration of a novel piece of research that stands
+to benefit from this treatment.  While the former has the benefit that
+we already know the answer and can use it to verify the system, the
+latter has the advantage that it might get some actual research done
+(such as the next iteration preceding Grem's thesis).
+
+\section{What We Actually Propose}
+
+We propose to better nail the language for talking about
+probabilities, as discussed in
+Sections~\ref{explicit}~and~\ref{implicit}, and to push forward in
+some subset of the other directions here discussed.  It is not obvious
+which will yield the best ratio of payoff to work, nor which will sit
+best with the objectives of the class.  On that point we seek advice.
+
+\end{document}

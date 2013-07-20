@@ -1,0 +1,41 @@
+How much motivation do we want?
+
+What _is_ probabilistic computation?
+- We chose the creation, manipulation, and querying of probability
+  distributions
+- Differentiate from more general processing of beliefs in 
+  (possibly non-constructive) propositions?
+
+Specification of distributions
+- make-discrete-distribution
+- explicit combinators
+- implicit language
+  - mention Monte Carlo as a natural way to think about the meaning
+    of stochastic thunks
+
+Querying distributions
+
+Implementation
+- core idea of density streams
+- distribution objects as caches
+  - caches are needed to answer questions efficiently
+- mechanism for converting stochastic thunks to density streams
+- density-stream->mass-stream (we need it for distribution-select)
+
+Results?
+- hangman.scm plays a mean game of hangman
+  - Contrast with various straw men?
+  - Do we want to talk about how fast it is?
+
+Future Work
+- numerical issues
+- dependency discovery and exploitation
+- continuous distributions
+  - reasoning by proofs rather than direct computations?
+- user supplied hints for inference
+  - A* heuristics
+  - explicit dependencies
+
+Appendix
+- Full documentation of public api (format: html? texinfo? SchemeDoc? latex?)
+- Full source code? (format: tarball? url? anonymous svn access?)

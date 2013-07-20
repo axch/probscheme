@@ -1,0 +1,165 @@
+Slide: Probabilistic inference is useful
+- examples
+
+should I have a slide or two on what probability and inference are?
+
+Slide: but bleeding edge inference systems are terrible programming languages
+- so probablistic systems are hard to build
+  - from scratch sucks too
+- so we want an efficient reasoning system with a nice
+  programming interface
+- they are domain-specific programming languages, but bad ones
+- hew close to their formalisms or algorithms
+
+Slide: I built an inference library for Scheme
+- as an experiment in api design
+- to explore the tension between being reasonable to
+  program with vs supporting efficient inference
+- I started from programming convenience
+
+Slide: If you were going to build your own inference library, how
+would you do it?  Mention restriction to discrete distributions
+The main questions are
+- How to represent distributions?
+- How to create, combine and manipulate distributions?
+- How to get answers out of distributions?
+
+How about the order
+- Explicit language
+- Naive representation / querying
+- Better representation / querying
+- Implicit language
+
+- create distributions with
+  - (make-probability-distribution '(obj1 prob1) '(obj2 prob2) ...)
+
+Slide: The natural distribution combinators follow the 
+laws of probability theory:
+- if we know p(x) and p(y|x), then
+  p(x,y) = p(x)*p(y|x)
+  - (dependent-product distribution function combiner)
+    - for convenience, really return p((combiner x y)), though combiner could be cons
+
+Slide: The natural distribution combinators follow the 
+laws of probability theory:
+- if we know p(x) and A(x)
+  - p(x|A) = p(x)/p(A) if A(x); 0 else
+  - (conditional-distribution distribution predicate)
+
+Slide: A naive representation scheme is to have each
+probability distribution be a list (or hash table)
+associating objects with their probabilities.
+- dependent-product and conditional-distribution have
+  natural implementations (handwave)
+- querying can be "what is the probability of this object"
+- iteration can be "give me an alist of objects and probabilities"
+
+Slide: The problem with this is distributions with long tails
+- e.g. possible parse trees of a sentence
+  - there is a vast number of them, but most of them are so 
+    unlikely as to be irrelevant for practical purposes
+- a distribution over the number of heads one will flip on
+  a fair coin before flipping one's first tail is actually 
+  infinite, but again, we probably don't care about the long tail
+
+Slide: The solution, v1.0 is streams (in the SICP sense of the word)
+- explain what a stream is, if need be
+- represent a distribution as a stream of possibilities, together
+  with a cache of values seen so far, and count of undetermined
+  probability
+- querying becomes "tell me the upper and lower bounds on the
+  probability of this object"
+- iteration becomes "give me the underlying stream"
+- also add "please compute some more, to bring the bounds closer together"
+- yields a restartable, bounded-error anytime approximation strategy
+  - the best kind of approximation, for the user
+- but...
+
+Slide: The problem with this solution is renormalization
+- If a distribution is a list of values and probabilities,
+  you know the sum of the probabilities and can normalize
+- If it's a stream, you don't want to run to the end of the
+  stream to discover the normalization constant
+  - And if you condition your distributions, it won't be 1.
+
+Slide: The solution, v1.1 is to allow impossibilities in the
+streams
+- An "impossibility" represents probability that disappears
+  to an unsatisfied predicate.
+- The cache remembers how much probability is gone and 
+  normalizes implicitly when asked about the bounds on the
+  probabilities of various objects.
+
+Slide: Switch gears to constructing complicated distributions
+
+Slide: Defining Complex Distributions
+- make-discrete-distribution lets you build distributions you
+  already know
+- then you can morph them with dependent-product and conditional-distribution
+- but that gets really messy really fast
+
+Slide: For example, rolling a pair of dice
+- code, and walk through
+
+Slide: Many distributions actually arise as the results of
+some stochastic process, with perhaps some observed
+consequences
+- so you'd like to code them as such
+  - repeat example, better
+
+Slide: The primitives you need for this are:
+- stochastic-thunk->distribution
+  takes a thunk implementing a stochastic process and
+  returns the distribution on that thunk's return values
+- discrete-select introduces stochastic choices
+- observe! constrains previous choices with observations
+
+Slide: What does this mean
+- Interpretation by semantics of rejection sampling
+
+More slides with examples of how this is nicer
+
+Slide: How it actually works
+- call/cc goodness
+
+Representation:
+- Naive: List of value-probability pairs
+  - Problem: requires exact inference, which loses on long-tailed distributions
+- Mine: _Stream_ of value-probability pairs
+  - Since the search is deferred, can't wait 'til the end to 
+    normalize, and don't want to renormalize eagerly, so actually
+    this is a stream of value-density pairs or impossibilities
+  - Has a cache of the results so far
+
+Creation, combination, manipulation:
+- Explicit looks like (this is not actually perfect, I think):
+  - (make-probability-distribution '(obj1 prob1) '(obj2 prob2) ...)
+  - (conditional-distribution distribution predicate)  - p(x|A) = p(x)/p(A) if A(x); 0 else
+  - (dependent-product distribution function combiner) - p(x,y) = p(x)*p(y|x)
+- Implicit:
+  - (discrete-select (obj1 prob1) (obj2 prob2) ...)
+    - needs to be a macro to support recursion!
+  - (observe! boolean)
+  - (stochastic-thunk->distribution thunk) encapsulates nondeterminism
+    - serves as a bridge between the implicit world and the explicit
+      world.  Bridge the other way is (distribution-select distribution)
+  - This is about expressive power (exemplify)
+    - What power does this give you that you didn't have before?
+
+Querying distributions:
+- Naive:
+  - What is the probability of x?
+  - Give me an alist of objects and probabilities
+  - Problem: requires exact inference, which loses on long-tailed distributions
+- Mine:
+  - What are the upper and lower bounds on the probability of x?
+    - Also: please compute some more, to bring the bounds closer
+  - Give me a stream of pairs of objects and probabilities (with impossibilities)
+  - This leads to a resumable anytime approximation strategy with bounded errors
+
+The "Naive - Mine" distinction is about allowing efficient
+implementation (namely approximation).
+
+Big ideas in the implementation are streams, which make everything
+except the implicit language pretty obvious, and the implicit language
+(with call-with-current-continuation goodness).

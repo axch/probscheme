@@ -1,0 +1,22 @@
+Work related to this stuff:
+
+Blaise wants to embed MCMC in Java
+iBal is a stochastic version of OCaml, but I think not an embedding
+- Avi Pfeffer
+- "IBAL: A Probabilistic Rational Programming Language" by Pfeffer in IJCAI 2001
+BLOG is sort of related
+- Brian Milch
+Poole and such have thought about search for inference
+- also Bacchus, Value Elimination
+Prism?
+Stochastic Logic Programming?
+- Muggleton and co
+PRMs
+- Koller, D. and A. Pfeffer 1998. Probabilistic Frame-based Systems
+  In AAAI'98, pp. 580-587
+- Friedman et al, 1999 Learning PRMs. in IJCAI'99.
+
+Search stuff, amb is related
+
+Some research into probabilistic functional programming
+http://web.engr.oregonstate.edu/~erwig/papers/PFP_JFP06.pdf

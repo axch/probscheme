@@ -1,0 +1,78 @@
+Title Slide:
+- Work I started this Spring in Gerry's class
+
+Outline Slide 1:
+- Structure of the talk
+
+Outline Slide 2
+
+Probability Theory:
+- Extension of logic, so one can reason even with incomplete information
+- Proven isomorphic to any theory that satisfies some natural
+  qualitative desiderata (real numbers, consistency, completeness)
+- Bayes Rule lets us infer causes from observing effects
+
+Inference:
+
+Inference is Useful:
+- lots of research, addressing lots of interesting AI problems
+
+Inference is Hard to Use:
+- buzzwords: belief propagation, variational methods, Gibbs sampling, MCMC
+- existing systems are domain-specific languages for using their particular
+  algorithms, but they are embedded badly, compose poorly, etc.
+- so, what to do?
+
+Library for Scheme:
+- want a good domain-specific language for inference, not any one 
+  inference algorithm
+- constrain to discrete distributions because that's easier
+
+If you were going to:
+- The rest of the talk explores these questions and gives my answers
+
+Outline:
+- The first main idea is about representation of distributions
+
+Literal Syntax:
+- Discrete literal distributions are usually small and simple, so this works
+
+Natural Combinators:
+- If we have information about x, and about the dependence of y on x,
+  we have information about x and y occurring together
+- Lump multiplying and summing into one operation for semantic ease:
+  distributions are always over just one (possibly structured) value
+- combiner can just be "cons"
+
+Example:
+- Point to the pieces and their functions
+
+Natural Combinators 2:
+- If we have information about x a priori of A, and about A, we can 
+  make deductions about x given that we know A is true
+
+Example:
+- We still don't know everything about the result, but nonetheless
+  we can reason about it
+
+Naive Representation:
+- Handwave about dependent-product
+- querying and iteration are ideal
+
+The Problem:
+- main idea: low probability things don't matter much in the end
+- Always lose if insist on exact answers
+
+The Solution 1:
+- Best possible kind of approximation
+
+
+
+Outline:
+- The second main idea is about convenient creation of complex distributions
+
+Point at big code slides, compare
+
+Rolling Dice, Again:
+- Semantics can imagined by rejection samping
+- Actual implementation does a systematic search
