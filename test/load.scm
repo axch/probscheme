@@ -89,5 +89,5 @@
                              (with-working-directory-pathname
                               my-path
                               (lambda ()
-                                (load "../load-probscheme")))))
+                                (load "../load")))))
   (register-test mltea-group))

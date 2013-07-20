@@ -366,9 +366,9 @@ SL#  Procedure-name          Expression
 1 ]=> 
 ;Value: 11
 
-1 ]=> (load "~/probscheme/load-probscheme")
+1 ]=> (load "~/probscheme/load")
 
-;Loading "/home/axch/probscheme/load-probscheme.scm"... 
+;Loading "/home/axch/probscheme/load.scm"... 
 ;  Loading "shift-reset.scm"... done
 ;  Loading "lazy.scm"... 
 ;    Loading "srfi-45.scm"... done
