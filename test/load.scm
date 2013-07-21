@@ -27,7 +27,7 @@
 (define (load-relative filename)
   (self-relatively (lambda () (load filename))))
 
-(set! load/suppress-loading-message? #t) (newline)
+(set! load/suppress-loading-message? #t)
 
 (load-relative "../testing/load")
 
@@ -66,6 +66,7 @@
 			  (with-working-directory-pathname
                            my-path
                            (lambda ()
+                             (set! load/suppress-loading-message? #t)
                              (load "../examples/more-coin-flipping")
                              (load "../examples/more-animal-tree")))))
   (register-test expl-group))
@@ -83,11 +84,13 @@
 			  (with-working-directory-pathname
                            my-path
                            (lambda ()
+                             (set! load/suppress-loading-message? #t)
                              (load "../publications/mltea_talk/load")))))
   (set-tg:group-tear-down! mltea-group
 			   (lambda ()
                              (with-working-directory-pathname
                               my-path
                               (lambda ()
+                                (set! load/suppress-loading-message? #t)
                                 (load "../load")))))
   (register-test mltea-group))
