@@ -46,5 +46,5 @@ task :clean => [:clean_latex, :clean_compiled] do
 end
 
 task :release => :clean do
-  sh "cd #{File.dirname(__FILE__)}; " + %Q{tar --create --verbose --file ../probscheme.tar --directory .. --exclude="*.git*" --exclude="*amb-examples*" --exclude=.commitmail --exclude="*doc*" --exclude="todo*.txt" probscheme/}
+  sh "cd #{File.dirname(__FILE__)}; " + %Q{tar --create --verbose --file ../probscheme.tar --directory .. --exclude="*.git*" probscheme/}
 end
