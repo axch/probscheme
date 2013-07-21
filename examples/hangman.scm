@@ -22,10 +22,11 @@
 ;;;; Hangman Player
 
 ;;; Batch mode:
-;;; 1. Load this file (with working directory your probscheme checkout)
-;;; 2. Evaluate (prepare-hangman <length>) to prepare the program to guess
+;;; 1. Load probscheme
+;;; 2. Load this file
+;;; 3. Evaluate (prepare-hangman <length>) to prepare the program to guess
 ;;;    words of the given length
-;;; 3. Evaluate (play-hangman <true-word> hangman-guess-letter) to
+;;; 4. Evaluate (play-hangman <true-word> hangman-guess-letter) to
 ;;;    watch the program guess the given word.  The word ought to be
 ;;;    the length given.
 ;;;    - The outputs indicate the current score, the program's current
@@ -34,8 +35,7 @@
 
 ;;;; Utilities
 
-(load "load")
-(load "decisions")
+(load-relative-compiled "../decisions")
 
 (define *alphabet*
   (string->list "qwertyuiopasdfghjklzxcvbnm"))
