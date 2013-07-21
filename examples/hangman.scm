@@ -34,13 +34,14 @@
 
 ;;;; Utilities
 
-(load "load-probscheme")
+(load "load")
 (load "decisions")
 
 (define *alphabet*
   (string->list "qwertyuiopasdfghjklzxcvbnm"))
 
-(define (slurp-corpus filename len limit #!optional dictionary-only)
+(define (slurp-corpus filename len #!optional limit dictionary-only)
+  (if (default-object? limit) (set! limit 10000))
   (if (default-object? dictionary-only) (set! dictionary-only #f))
   (with-input-from-file 
       filename
@@ -163,7 +164,7 @@
 ;; providing for all of them.
 (define *hangman-opening-cache*)
 
-(define (prepare-hangman word-length limit #!optional dictionary-only)
+(define (prepare-hangman word-length #!optional limit dictionary-only)
   (set! *hangman-opening-cache* '())
   (set! *hangman-prior* #f) ; Clear space while building the next one
   (set! *hangman-prior*
