@@ -40,14 +40,14 @@
 (load-relative "implicit-distributions-test")
 (in-test-group
  examples
- (load-relative "../examples/die-rolling-test")
- (load-relative "../examples/bernoulli-urn-test")
- (load-relative "../examples/drunken-sailor-test")
- (load-relative "../examples/geometric-test")
- (load-relative "../examples/normalization-test")
- (load-relative "../examples/math-problems-test")
- (load-relative "../examples/coin-flipping-test")
- (load-relative "../examples/animal-tree-test"))
+ (load-relative "examples/die-rolling-test")
+ (load-relative "examples/bernoulli-urn-test")
+ (load-relative "examples/drunken-sailor-test")
+ (load-relative "examples/geometric-test")
+ (load-relative "examples/normalization-test")
+ (load-relative "examples/math-problems-test")
+ (load-relative "examples/coin-flipping-test")
+ (load-relative "examples/animal-tree-test"))
 
 (define my-path (directory-namestring (current-load-pathname)))
 
@@ -72,7 +72,7 @@
 
 (in-test-group
  explicit-distributions
- (load-relative "../examples/more-animal-tree-impl-test"))
+ (load-relative "examples/more-animal-tree-impl-test"))
 
 (let ((mltea-group (make-test-group 'mltea)))
   (tg:register-test! mltea-group
