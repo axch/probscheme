@@ -25,3 +25,5 @@ The code is laid out as follows:
   - The `testing/` directory is a git submodule pointed at the [Test
     Manager](http://github.com/axch/test-manager/) framework that the
     test suite is written in.
+
+- "Issue tracker" by force of will: `todo.txt`.

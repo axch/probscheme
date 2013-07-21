@@ -1,0 +1,49 @@
+Think about the explicit distribution equivalents of *everything* that
+happens implicitly (in particular, make sure you can say everything in
+either language)
+- Do I want to write a translator from one to the other?
+
+Things to make distributions from:
+- explicit lists
+- standard distributions
+  - unifrom
+  - poisson
+- long explicit lists (load dataset)
+- probability mass functions (with range constraints)
+  - perhaps this can implemented as 
+    (alist->distribution (map (lambda (obj) (cons obj (pmf obj))) range))
+  - much cleverness will be needed to be able to use the structure in
+    the function to advantage
+    - but I think the way to continuous distributions lies here
+  - this tells you something that the standard thing does not:
+    pmf(x) is exactly the probability of x: other mass cannot drop
+    onto x later.
+
+Reference manual:
+- What's the deal with the equality predicates by which data are reduced?
+- Consistent use of the word 'value' vs the word 'datum'
+
+What's up with equality of distributions?
+
+What's up with impossible situations?  What should happen when one
+asks for
+(conditional-distribution die-roll-distribution char?) ?
+
+Strange thoughts about more primitives:
+- splice, a little parallel to unquote, e.g:
+  (define (geometric-dist alpha n)
+    (make-discrete-distribution
+     (list n alpha)
+     (list (splice (geometric-dist alpha (+ n 1))) (- 1 alpha))))
+  This happens automatically in discrete-select land, so it should
+  have a parallel in explicit-land.
+
+Do I want to define dependent-product like this?
+;; !!!
+(define (dependent-product distribution generator combiner)
+  (stochastic-thunk->distribution
+   (lambda ()
+     (let* ((first (distribution-select distribution))
+	    (second (distribution-select (generator first))))
+       (combiner first second)))))
+
