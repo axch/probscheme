@@ -42,7 +42,7 @@ task :clean_compiled do
 end
 
 task :clean => [:clean_latex, :clean_compiled] do
-  sh "cd #{File.dirname(__FILE__)}; find . -name '*~' | xargs rm -f; find . -name 'actions.log' | xargs rm -f"
+  sh "cd #{File.dirname(__FILE__)}; find . -name '*~' | xargs rm -f"
 end
 
 task :release => :clean do
