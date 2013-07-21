@@ -2,7 +2,12 @@ Probabilistic Scheme
 ====================
 
 A probabilistic programming language embedded in MIT Scheme.
-
+Probabilistic Scheme offers anytime exact inference over discrete (but
+potentially infinite) probability spaces, including the possibility to
+condition on evidence.  The embedding means that the deterministic
+potions of a model are seamlessly executed as efficiently as any
+normal program, and that the model query language is just Scheme (with
+a rich API for interrogating probability distributions).
 
 Installation
 ------------
