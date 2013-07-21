@@ -30,6 +30,7 @@
 (set! load/suppress-loading-message? #t)
 
 (load-relative "../testing/load")
+(load-relative-compiled "test-helper")
 
 (load-relative "../examples/coin-flipping")
 (load-relative "../examples/bernoulli-urn")

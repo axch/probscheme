@@ -32,5 +32,3 @@
 (load-relative-compiled "distribution")
 (load-relative-compiled "implicit")
 (load-relative-compiled "library")
-
-(load-relative-compiled "test-helper")
