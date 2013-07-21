@@ -273,6 +273,8 @@
        (assert-true (distribution? internal-dist))
        (assert-false (distribution/determined? internal-dist))
        (distribution/refine! internal-dist)
+       (assert-false (distribution/determined? internal-dist))
+       (distribution/refine! internal-dist)
        (assert-true (distribution/determined? internal-dist)))
      (assert-distribution
       '((heads . 1/10)

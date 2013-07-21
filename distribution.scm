@@ -26,6 +26,7 @@
                                 (stream hash-table determined-density))
                    (conc-name distribution/))
   stream
+  (stream-done? #f) ;; Can't ask whether it's null? because that forces it!
   (hash-table #f read-only #t)
   determined-density
   (discarded-density 0)
@@ -45,7 +46,9 @@
                       (record-element element distribution)
                       (set-distribution/stream! distribution remainder)
                       (stream-cons element remainder))
-                    stream-nil)))
+                    (begin
+                      (set-distribution/stream-done?! distribution #t)
+                      stream-nil))))
              hash-table
              determined-density)))
     distribution))
@@ -219,7 +222,7 @@
 ;;; repeatedly discovered data.
 
 (define (distribution/determined? distribution)
-  (stream-null? (distribution/stream distribution)))
+  (distribution/stream-done? distribution))
 
 (define (distribution/density-bounded? distribution density-bound)
   (<= (distribution/undetermined-density distribution)
@@ -245,6 +248,8 @@
 (define (distribution/refine-until! distribution predicate)
   (let loop ()
     (cond ((predicate distribution) #t)
+          ((distribution/determined? distribution)
+           (error "Distribution will never satisfy predicate" distribution predicate))
           ((distribution/refine! distribution) (loop))
           (else #f))))
 
