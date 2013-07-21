@@ -20,5 +20,5 @@ submodule init` and `git submodule update`.
 Usage
 =====
 
-- [Main ideas](report.pdf)
+- [Main ideas](report.pdf?raw=true)
 - [Reference Manual](manual.txt)
