@@ -105,10 +105,18 @@ Creating Explicit Distributions
 
 Interprets each possibility argument as a two-element list of an object
 and its probability.  Returns the probability distribution that assigns
-that probability to those objects, and zero to all others.
-TODO Normalization of probability values?
-TODO Conditioned on what?
-TODO Other ways to make explicit distributions?
+that probability to those objects, and zero to all others.  Expects
+the probabilities to sum to 1.
+
+(alist->distribution alist)
+
+Like make-discrete-distribution, but accepts a association list of
+data to probabilities.
+
+(hash-table->distribution hash-table)
+
+Like alist->distribution but accepts a hash table mapping data to
+probabilities.
 
 Manipulating Explicit Distributions
 
@@ -116,10 +124,6 @@ Manipulating Explicit Distributions
 
 Given the distribution p(x|I) and the function f returns the 
 distribution p(f(x)|I).
-TODO What's the right notation for this?
-TODO What's up with the background information I here?  It is not
-explicitly represented in the distributions.  What does this
-function do with it?
 
 (dependent-product distribution function combiner)
 
@@ -147,8 +151,12 @@ mutually exclusive, we know that
 
 p(A|I) = \sum_{x:A(x)} p(x|I).
 
-TODO What happens if A(x) is unsatisfiable?  Divide by zero?
-TODO Which piece of mathematics justifies this?
+If p(A|I) turns out to be zero, that is, if A(x) turns out not to be
+true for any x that had positive probability under p(x|I), the result
+will be an impossible distribution.  Such a distribution will always
+give 0 and 1 as the bounds for any datum (see Querying, below), and
+may throw division by zero errors on some operations if completely
+determined.
 
 Abstracting Explicit Distributions
 
