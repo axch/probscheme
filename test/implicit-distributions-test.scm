@@ -174,7 +174,11 @@
      ;; long as the machine doesn't know they're impossible:
      (check (equal? 0 (distribution/datum-min-mass impossible-finite-dist 2)))
      (check (equal? 1 (distribution/datum-max-mass impossible-finite-dist 2)))
-     (check (<= (distribution/undetermined-density impossible-finite-dist) 1/2))))
+     (check (<= (distribution/undetermined-density impossible-finite-dist) 1/2))
+     (check (= 1 (distribution/undetermined-mass impossible-finite-dist)))
+     ;; Errors about with divide by zero
+     #;
+     (distribution/refine-to-mass-bound! impossible-finite-dist 1/2)))
 
  (define-test (distribution-select-smoke)
    (let* ((die-roll-dist (stochastic-thunk->distribution roll-die))
