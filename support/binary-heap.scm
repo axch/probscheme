@@ -17,6 +17,8 @@
 ;;; along with Probabilistic Scheme.  If not, see <http://www.gnu.org/licenses/>.
 ;;; ----------------------------------------------------------------------
 
+(declare (usual-integrations))
+
 ;;; Binary Heap Infrastructure
 ;; 
 
