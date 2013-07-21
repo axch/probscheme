@@ -162,6 +162,20 @@
      (assert-equal 1/2 (distribution/min-normalizer broken-die-dist))
      (assert-equal 1/2 (distribution/max-normalizer broken-die-dist))))
 
+ (define-test (impossibilities)
+   (let ((impossible-finite-dist
+          (stochastic-thunk->distribution
+           (lambda ()
+             (let ((number (roll-die)))
+               (observe! (> number 6))
+               number)))))
+     (distribution/refine-to-density-bound! impossible-finite-dist 1/2)
+     ;; Impossible distributions are harmless (if uninformative) as
+     ;; long as the machine doesn't know they're impossible:
+     (check (equal? 0 (distribution/datum-min-mass impossible-finite-dist 2)))
+     (check (equal? 1 (distribution/datum-max-mass impossible-finite-dist 2)))
+     (check (<= (distribution/undetermined-density impossible-finite-dist) 1/2))))
+
  (define-test (distribution-select-smoke)
    (let* ((die-roll-dist (stochastic-thunk->distribution roll-die))
 	  (die-roll-dist2
