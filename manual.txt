@@ -1,7 +1,7 @@
 Probabilistic Scheme
 
-Once upon a time, there was an embedding of probabilistic reasoning
-into Scheme.  Probabilistic reasoning is all about probabilities and
+Probabilistic Scheme is an embedding of probabilistic reasoning into
+Scheme.  Probabilistic reasoning is all about probabilities and
 probability distributions.  A probability is a numeric measure of the
 strength with which one should believe the truth of some proposition
 A, taking for granted some information I (in the cases where that
@@ -93,7 +93,7 @@ mass to only a few objects, it is possible for the system to compute
 the distribution out in full, and for the undetermined mass to be
 reduced to zero.  In the case of more complex distributions, however,
 that assign mass to (perhaps infinitely) many objects, it may take a
-(perhaps inifinitely) large amount of computation to determine all of
+(perhaps infinitely) large amount of computation to determine all of
 the assignments of mass.  In such a case, the undetermined mass in any
 one distribution will monotonically decrease as computation is
 performed, but may never reach zero.  The query language for asking
@@ -118,12 +118,12 @@ Given the distribution p(x|I) and the function f returns the
 distribution p(f(x)|I).
 TODO What's the right notation for this?
 TODO What's up with the background information I here?  It is not
-explicity represented in the distributions.  What does this
+explicitly represented in the distributions.  What does this
 function do with it?
 
 (dependent-product distribution function combiner)
 
-A distribution p(y|X,I) that depends on the value of some varibale X
+A distribution p(y|X,I) that depends on the value of some variable X
 can be represented as a function of X that, when given any particular
 value x, returns the distribution p(y|X=x,I).  Given a distribution
 p(x|I) and such a function (lambda (x) p(y|X=x,I)), dependent-product
@@ -201,7 +201,7 @@ object knows, lead to density for more values that satisfy A, or more
 density for already-discovered values that satisfy A, or be lost to
 objects that do not satisfy A, which latter case will affect the
 apparent mass of already-discovered values that satisfy A.  All these
-quantities and various derivativables from them can be retrieved from
+quantities and various derivables from them can be retrieved from
 a probability distribution object without causing it to perform any
 further computation:
 
@@ -268,7 +268,7 @@ min-probability = current-density / max-normalization-constant
 
 Return the maximum probability that the given datum could have in this
 distribution.  The maximum value will be realized if all the remaining
-uncomputed denisty goes to this datum.
+uncomputed density goes to this datum.
 
 max-probability = (current-density + undetermined-density) / max-normalization-constant
 
@@ -337,12 +337,12 @@ case, the expression (cons (roll-die) (roll-die)) returns one of the
 36 cons cells that have one of those numbers in the car slot and one
 in the cdr slot, also implicitly uniformly distributed.  The
 expression (+ (roll-die) (roll-die)) will return one of the numbers
-from 2 through 12, implictly distributed according to the probability
+from 2 through 12, implicitly distributed according to the probability
 of getting that sum when rolling two fair six sided dice.  So on and
 so forth, for the purely functional subset of Scheme.  { TODO: What
 sorts of things can go wrong?  What are the semantics (if any) of
 side-effects?  What happens if one starts invoking continuations?  How
-else could Muphy's Law apply? }
+else could Murphy's Law apply? }
 TODO Other ways of making implicit distributions?
 TODO Laziness on the objects, e.g.
 (define (geometric alpha n)
@@ -360,7 +360,7 @@ Consider, for example, the expression
   (observe! (> face 2))  ;; Line 2
   face)                  ;; Line 3
 In line 1, the expression (roll-die) returns one of the numbers from 1
-through 6, implicitly unformly distributed.  let then binds it to the
+through 6, implicitly uniformly distributed.  let then binds it to the
 name face, whose value is then implicitly uniformly distributed over 1
 through 6.  The expression (> face 2) on line 2 has one of the values
 #t, #f, implicitly distributed as 2/3 for #t and 1/3 for #f.  observe!
