@@ -30,7 +30,7 @@ p(A or B|I) = p(A|I) + p(B|I) - p(A,B|I),
 
 says that the probability, on the strength of some particular
 background information I, for either A or B is equal to the probability
-for A given I, plus the probability for B given I, minus the 
+for A given I, plus the probability for B given I, minus the
 probability for both A and B given I.  As a specific consequence,
 if I entails that A and B are mutually exclusive, then p(A,B|I) = 0,
 and the sum rule reduces to
@@ -122,7 +122,7 @@ Manipulating Explicit Distributions
 
 (map-distribution distribution function)
 
-Given the distribution p(x|I) and the function f returns the 
+Given the distribution p(x|I) and the function f returns the
 distribution p(f(x)|I).
 
 (dependent-product distribution function combiner)
@@ -141,7 +141,7 @@ is cons.
 
 Given a distribution p(x|I) and a predicate A(x), returns the distribution
 over x'es that satisfy the predicate: p(x|A(x) is true, I), which
-is given by 
+is given by
 
 p(x|A(x), I) = p(x|I) / p(A|I)    if A(x) is true
 p(x|A(x), I) = 0                  if A(x) is false
@@ -327,17 +327,17 @@ some "random" process, leaving the distributions that arise inside
 that process implicit, and converting to an explicit distribution only
 when it becomes useful to consider the distribution as a whole.
 
-(discrete-select possibility ...)
+(discrete-select (object mass) ...)                             syntax
 
 Takes any number of two-element lists representing object-probability
-pairs.
-TODO It's a macro now.  How do I describe the input syntax?
-TODO Normalization?
+pairs.  The expressions defining the objects and probabilities are
+evaluated lazily, and the probabilities are expected to sum to 1.
 Returns one of the objects, implicitly distributed according to the
-distribution specified by the probabilities.  Implicit distributions
-for the values of expressions transform according to the combinations
-of the input values and the rules of probability theory.  For example,
-we can 
+distribution specified by the probabilities.
+
+Implicit distributions for the values of expressions transform
+according to the combinations of the input values and the rules of
+probability theory.  For example, we can
 (define (roll-die)
   (discrete-select (1 1/6) (2 1/6) (3 1/6)
                    (4 1/6) (5 1/6) (6 1/6)))
@@ -349,17 +349,15 @@ in the cdr slot, also implicitly uniformly distributed.  The
 expression (+ (roll-die) (roll-die)) will return one of the numbers
 from 2 through 12, implicitly distributed according to the probability
 of getting that sum when rolling two fair six sided dice.  So on and
-so forth, for the purely functional subset of Scheme.  { TODO: What
-sorts of things can go wrong?  What are the semantics (if any) of
-side-effects?  What happens if one starts invoking continuations?  How
-else could Murphy's Law apply? }
-TODO Other ways of making implicit distributions?
-TODO Laziness on the objects, e.g.
+so forth, for the purely functional subset of Scheme.
+
+Laziness on the objects of discrete-select permits construction of
+infinite distributions, for example the geometric distribution with
+constant alpha and minimum value n:
 (define (geometric alpha n)
   (discrete-select
    (n alpha)
    ((geometric alpha (+ n 1)) (- 1 alpha))))
-Does this have a parallel in the explicit world?  What is that parallel?
 
 (observe! boolean)
 
@@ -381,11 +379,19 @@ distribution of return values from this whole let form is then
 p(face|I,(> face 2)), in other words uniform over the numbers from
 3 through 6.
 
+(likelihood! p)
+
+A shortcut over observe! that modifies the current implicit
+distribution, multiplying the probability of any result subsequent to
+the call to likelihood! by p.  Could be defined as
+(define (likelihood! p)
+  (observe! (discrete-select (#t p) (#f (- 1 p)))))
+
 (stochastic-thunk->distribution thunk)
 
-Returns, as an explicit probability distribution, the implicit 
+Returns, as an explicit probability distribution, the implicit
 distribution over the possible return values of the given thunk.
-To continue the running example above, 
+To continue the running example above,
 (stochastic-thunk->distribution roll-die)
 would return an explicit probability distribution object that
 assigned equal mass to the six numbers from 1 through 6.
