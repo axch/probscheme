@@ -27,10 +27,26 @@
 (define (load-relative filename)
   (self-relatively (lambda () (load filename))))
 
-(load-relative "support/load")
-(load-relative-compiled "possibility")
-(load-relative-compiled "distribution")
-(load-relative-compiled "implicit")
-(load-relative-compiled "library")
+(load-relative "auto-compilation")
 
-(load-relative-compiled "test-helper")
+(load-relative-compiled "shift-reset")
+
+;;; SRFI-45 provides an implementation of LAZY that uses iterative
+;;; forcing, but being written in r5rs Scheme it does not take
+;;; advantage of any MIT-Scheme optimizations that the naive LAZY
+;;; does.  As a consequence, it appears to slow the system
+;;; appreciably, even though it does resolve issues with stack
+;;; overflow.
+
+; (define-syntax lazy
+;   (syntax-rules ()
+;     ((LAZY promise)
+;      (DELAY (FORCE promise)))))
+
+(load-relative-compiled "srfi-45")
+
+(load-relative-compiled "lazy")
+(load-relative-compiled "stack")
+(load-relative-compiled "queue")
+(load-relative-compiled "binary-heap")
+(load-relative-compiled "priority-queue")
