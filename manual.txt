@@ -180,7 +180,9 @@ Notice that p(A|I) does not depend on x, so the first line above means
 that the desired probability p(x|I') is proportional to the quantity
 p(x|I) for those x that satisfy the predicate A.  In this context,
 this quantity p(x|I) is called the density of x, and the quantity
-p(A|I) is called the normalization constant.
+p(A|I) is called the normalization constant.  In contrast, mass is the
+term for p(x|I').  The mass of x does not depend upon the choice of A
+and I, and is usually the quantity of interest.
 
 Probabilistic Scheme embodies this decomposition as follows.  The
 object that represents (and can compute) the distribution p(x|I') can
@@ -188,20 +190,16 @@ be viewed as internally working by computing some distribution p(x|I)
 and applying some predicate A to it, such that I' = A,I.  This will be
 actually true in a nontrivial way for objects created by
 conditional-distribution, for which the distribution p(x|I) is the one
-passed in as the first argument, (TODO: clarify: if that one can be
-computed without being nontrivially decomposed itself) and the
-predicate A is the one passed in as the second.
+passed in as the first argument, and the predicate A is the one passed
+in as the second. [1]
 
 This decomposition is interesting because it interacts with the
 on-demand computation of probability distributions.  At any given
 time, an object computing p(x|I') according to the decomposition I' =
 A,I will have discovered some values x^a, with densities p(x^a|I), for
 which A(x) holds, and some other values x, with their densities
-p(x|I), for which A(x) does not hold, {TODO This is somewhat wrong.
-It just discovers that mass in p_X( |I) goes to a contradiction, but
-does not necessarily find specific values to check against the
-predicate.} and will still be aware of some undetermined mass in the
-distribution p_X( |I).
+p(x|I), for which A(x) does not hold, and will still be aware of
+some undetermined mass in the distribution p(x|I). [2]
 
 As the distribution computer objects in Probabilistic Scheme do not
 predict future computation, the undetermined mass could, as far as the
@@ -248,11 +246,8 @@ max-normalization-constant = min-normalization-constant + undetermined-density
 
 (distribution/undetermined-mass distribution)
 
-TODO Explain what this actually is a little better
-Density in the given distribution p(x|I') is mass in the
-decomposition-dependent distribution p(x|I).  The amount of *mass*
-that remains undetermined in p(x|I') is therefore a more
-meaningful quantity:
+Return the amount of probability mass that remains as yet
+undetermined.
 
 undetermined-mass = undetermined-density / max-normalization-constant
 
@@ -282,6 +277,13 @@ max-probability = (current-density + undetermined-density) / max-normalization-c
 
 Besides that, probability distribution objects can be asked to perform
 more of their computations:
+
+(distribution/probability distribution datum)
+
+If the distribution is completely determined, then the above min and
+max probabilities will be equal, and can be called the probability.
+This procedure returns that value, or signals an error if the
+distribution is not completely determined.
 
 (distribution/refine! distribution)
 
@@ -398,3 +400,23 @@ roll-die, above, could have been defined as
    (make-discrete-distribution '(1 1/6) '(2 1/6) '(3 1/6)
                                '(4 1/6) '(5 1/6) '(6 1/6))))
 
+Footnotes
+
+[1] Decomposition of distributions into generators and filters like
+this is not unique.  In particular, if
+
+p(x|I'') = p(x|A(x),I') and p(x|I') = p(x|B(x),I) then
+p(x|I'') = p(x|(A(x) and B(x)),I)
+
+This may arise nontrivially if a distribution produced by
+conditional-distribution is itself further conditioned.  The
+implementation is free to choose whatever decomposition is convenient,
+with the only guarantee being that each individual distribution object
+will be consistent.
+
+[2] For many A, the negative case can be evaluated more efficiently
+than generating putative x and testing them with A.  If x is a
+compound object and A a compound predicate, it may be possible to
+determine that A does not hold of x just from some part of x, in which
+case the (potentially many) possible x which agree on that part need
+not be generated.
