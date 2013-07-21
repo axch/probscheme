@@ -48,6 +48,7 @@
 (load-relative-compiled "lazy")
 (load-relative-compiled "stack")
 (load-relative-compiled "queue")
+(load-relative-compiled "binary-heap")
 (load-relative-compiled "priority-queue")
 (load-relative-compiled "possibility")
 (load-relative-compiled "distribution")

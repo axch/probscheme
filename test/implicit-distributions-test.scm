@@ -124,6 +124,44 @@
      (assert-equal 1/2 (distribution/min-normalizer broken-die-dist))
      (assert-equal 1/2 (distribution/max-normalizer broken-die-dist))))
 
+ (define-test (observations-2)
+   (let ((broken-die-dist
+	  (stochastic-thunk->distribution
+	   (lambda ()
+	     (let ((number (roll-die)))
+	       (observe! (even? number))
+	       number))
+           make-breadth-first-schedule)))
+     (distribution/determine! broken-die-dist)
+     (assert-fully-forced broken-die-dist)
+     (for-each
+      (lambda (num)
+	(assert-equal
+	 (if (even? num) 1/6 0)
+	 (distribution/datum-density broken-die-dist num)))
+      '(1 2 3 4 5 6))
+     (assert-equal 1/2 (distribution/min-normalizer broken-die-dist))
+     (assert-equal 1/2 (distribution/max-normalizer broken-die-dist))))
+
+ (define-test (observations-3)
+   (let ((broken-die-dist
+          (stochastic-thunk->distribution
+           (lambda ()
+             (let ((number (roll-die)))
+               (observe! (even? number))
+               number))
+           make-priority-schedule)))
+     (distribution/determine! broken-die-dist)
+     (assert-fully-forced broken-die-dist)
+     (for-each
+      (lambda (num)
+        (assert-equal
+         (if (even? num) 1/6 0)
+         (distribution/datum-density broken-die-dist num)))
+      '(1 2 3 4 5 6))
+     (assert-equal 1/2 (distribution/min-normalizer broken-die-dist))
+     (assert-equal 1/2 (distribution/max-normalizer broken-die-dist))))
+
  (define-test (distribution-select-smoke)
    (let* ((die-roll-dist (stochastic-thunk->distribution roll-die))
 	  (die-roll-dist2
