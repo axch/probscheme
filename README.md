@@ -5,7 +5,7 @@ A probabilistic programming language embedded in MIT Scheme.
 
 
 Installation
-============
+------------
 
 Just `git clone` this repository,
 ```scheme
@@ -18,7 +18,9 @@ the unit test framework that Probabilistic Scheme uses.  Type `git
 submodule init` and `git submodule update`.
 
 Usage
-=====
+-----
 
 - [Main ideas](report.pdf?raw=true)
+- [Examples](examples/)
 - [Reference Manual](manual.txt)
+- [Developer Guide](guide.md)
