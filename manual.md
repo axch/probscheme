@@ -1,4 +1,8 @@
-Probabilistic Scheme
+Probabilistic Scheme Reference Manual
+=====================================
+
+Background
+----------
 
 Probabilistic Scheme is an embedding of probabilistic reasoning into
 Scheme.  Probabilistic reasoning is all about probabilities and
@@ -100,32 +104,33 @@ performed, but may never reach zero.  The query language for asking
 probability distributions for information reflects this consideration.
 
 Creating Explicit Distributions
+-------------------------------
 
-(make-discrete-distribution possibility ...)
+`(make-discrete-distribution possibility ...)`
 
 Interprets each possibility argument as a two-element list of an object
 and its probability.  Returns the probability distribution that assigns
 that probability to those objects, and zero to all others.  Expects
 the probabilities to sum to 1.
 
-(alist->distribution alist)
+`(alist->distribution alist)`
 
 Like make-discrete-distribution, but accepts a association list of
 data to probabilities.
 
-(hash-table->distribution hash-table)
+`(hash-table->distribution hash-table)`
 
 Like alist->distribution but accepts a hash table mapping data to
 probabilities.
 
 Manipulating Explicit Distributions
 
-(map-distribution distribution function)
+`(map-distribution distribution function)`
 
 Given the distribution p(x|I) and the function f returns the
 distribution p(f(x)|I).
 
-(dependent-product distribution function combiner)
+`(dependent-product distribution function combiner)`
 
 A distribution p(y|X,I) that depends on the value of some variable X
 can be represented as a function of X that, when given any particular
@@ -137,7 +142,7 @@ multiple values, dependent-product takes a combiner to apply to the
 values x and y, to return p((combiner x y)|I).  An oft-useful combiner
 is cons.
 
-(conditional-distribution distribution predicate)
+`(conditional-distribution distribution predicate)`
 
 Given a distribution p(x|I) and a predicate A(x), returns the distribution
 over x'es that satisfy the predicate: p(x|A(x) is true, I), which
@@ -159,12 +164,14 @@ may throw division by zero errors on some operations if completely
 determined.
 
 Abstracting Explicit Distributions
+----------------------------------
 
 Probabilistic Scheme borrows abstraction mechanisms from Scheme.  The
 evaluation of an expression that returns a distribution, and the
 assigning of a name to its result, constitute abstraction.
 
 Querying Explicit Distributions
+-------------------------------
 
 First, some more terminology.  In general, any probability distribution
 p(x|I') can be decomposed as p(x|A(x), I), for some predicate A and the
@@ -211,23 +218,23 @@ quantities and various derivables from them can be retrieved from
 a probability distribution object without causing it to perform any
 further computation:
 
-(distribution? thing)
+`(distribution? thing)`
 
 Returns #t if the given thing is an object explicitly representing a
 probability distribution, and #f otherwise.
 
-(distribution/determined? distribution)
+`(distribution/determined? distribution)`
 
 Returns whether the given distribution object has already been fully
 determined, as opposed to having more computation it could do to
 further refine its knowledge of the distribution it represents.
 
-(distribution/undetermined-density distribution)
+`(distribution/undetermined-density distribution)`
 
 Returns the amount of density, relative the distribution's internal
 decomposition, that remains as yet undetermined.
 
-(distribution/min-normalizer distribution)
+`(distribution/min-normalizer distribution)`
 
 Return the lower bound on the normalization constant p(A|I).  The
 lower bound holds if all of the undetermined density goes to not A,
@@ -235,7 +242,7 @@ and is equal to the total density of discovered values that satisfy A:
 
 min-normalization-constant = \sum_{x^a} p(x^a|I).
 
-(distribution/max-normalizer distribution)
+`(distribution/max-normalizer distribution)`
 
 Return the upper bound on the normalization constant p(A|I).  The
 upper bound holds if all the undetermined density goes to values that
@@ -244,21 +251,21 @@ satisfy A plus the undetermined density:
 
 max-normalization-constant = min-normalization-constant + undetermined-density
 
-(distribution/undetermined-mass distribution)
+`(distribution/undetermined-mass distribution)`
 
 Return the amount of probability mass that remains as yet
 undetermined.
 
 undetermined-mass = undetermined-density / max-normalization-constant
 
-(distribution/datum-density distribution datum)
+`(distribution/datum-density distribution datum)`
 
 Return the density the datum is known to have in the distribution, as
 computed so far.  If the datum is known to satisfy the predicate, this
 is (the so-far-discovered portion of) p(x^a|I).  If it is not, this is
 zero.
 
-(distribution/min-probability distribution datum)
+`(distribution/min-probability distribution datum)`
 
 Return the minimum probability that the given datum could have in this
 distribution.  The minimum value will be realized if all the remaining
@@ -267,7 +274,7 @@ uncomputed density goes to other data that satisfy the predicate
 
 min-probability = current-density / max-normalization-constant
 
-(distribution/max-probability distribution datum)
+`(distribution/max-probability distribution datum)`
 
 Return the maximum probability that the given datum could have in this
 distribution.  The maximum value will be realized if all the remaining
@@ -278,14 +285,14 @@ max-probability = (current-density + undetermined-density) / max-normalization-c
 Besides that, probability distribution objects can be asked to perform
 more of their computations:
 
-(distribution/probability distribution datum)
+`(distribution/probability distribution datum)`
 
 If the distribution is completely determined, then the above min and
 max probabilities will be equal, and can be called the probability.
 This procedure returns that value, or signals an error if the
 distribution is not completely determined.
 
-(distribution/refine! distribution)
+`(distribution/refine! distribution)`
 
 Runs the computation in the given distribution for the smallest
 detectable increment, which is either until an acceptable datum x^a is
@@ -306,19 +313,20 @@ Higher-level forcing functions can be built by iterating
 distribution/refine! for some desired amount of time or until some
 desired condition has been met.
 
-(distribution/refine-until! distribution test)
+`(distribution/refine-until! distribution test)`
 
 Forces the distribution (with distribution/refine!) until the test
 returns true.  If the test is already true, does nothing.  If the
 distribution is already fully refined, but the test is not satisfied,
 signals an error.
 
-(distribution/refine-to-mass-bound! distribution bound)
+`(distribution/refine-to-mass-bound! distribution bound)`
 
 Forces the distribution until the undetermined mass in the distribution
 is less than or equal to the given bound.
 
 Implicit Distributions
+----------------------
 
 The preceding functions specify a language for working with explicit
 probability distributions.  It is often more natural, however, to
@@ -327,7 +335,7 @@ some "random" process, leaving the distributions that arise inside
 that process implicit, and converting to an explicit distribution only
 when it becomes useful to consider the distribution as a whole.
 
-(discrete-select (object mass) ...)                             syntax
+`(discrete-select (object mass) ...)                             syntax`
 
 Takes any number of two-element lists representing object-probability
 pairs.  The expressions defining the objects and probabilities are
@@ -338,56 +346,64 @@ distribution specified by the probabilities.
 Implicit distributions for the values of expressions transform
 according to the combinations of the input values and the rules of
 probability theory.  For example, we can
+```scheme
 (define (roll-die)
   (discrete-select (1 1/6) (2 1/6) (3 1/6)
                    (4 1/6) (5 1/6) (6 1/6)))
-Then every call to the (roll-die) function will return one of the
+```
+Then every call to the `(roll-die)` function will return one of the
 numbers from 1 through 6, implicitly uniformly distributed.  In that
-case, the expression (cons (roll-die) (roll-die)) returns one of the
+case, the expression `(cons (roll-die) (roll-die))` returns one of the
 36 cons cells that have one of those numbers in the car slot and one
 in the cdr slot, also implicitly uniformly distributed.  The
-expression (+ (roll-die) (roll-die)) will return one of the numbers
+expression `(+ (roll-die) (roll-die))` will return one of the numbers
 from 2 through 12, implicitly distributed according to the probability
 of getting that sum when rolling two fair six sided dice.  So on and
 so forth, for the purely functional subset of Scheme.
 
 Laziness on the objects of discrete-select permits construction of
 infinite distributions, for example the geometric distribution with
-constant alpha and minimum value n:
+constant alpha and minimum value `n`:
+```scheme
 (define (geometric alpha n)
   (discrete-select
    (n alpha)
    ((geometric alpha (+ n 1)) (- 1 alpha))))
+```
 
-(observe! boolean)
+`(observe! boolean)`
 
 Modifies the current implicit distribution by conditioning
 it on the argument being true.  Returns an unspecified value.
 Consider, for example, the expression
+```scheme
 (let ((face (roll-die))) ;; Line 1
   (observe! (> face 2))  ;; Line 2
   face)                  ;; Line 3
-In line 1, the expression (roll-die) returns one of the numbers from 1
+```
+In line 1, the expression `(roll-die)` returns one of the numbers from 1
 through 6, implicitly uniformly distributed.  let then binds it to the
 name face, whose value is then implicitly uniformly distributed over 1
-through 6.  The expression (> face 2) on line 2 has one of the values
-#t, #f, implicitly distributed as 2/3 for #t and 1/3 for #f.  observe!
-modifies this implicit distribution to require #t.  This modifies
-the implicit distribution for face to be consistent with (> face 2)
-returning #t, that is it conditions p(face|I) on (> face 2).  The
+through 6.  The expression `(> face 2)` on line 2 has one of the values
+`#t`, `#f`, implicitly distributed as 2/3 for `#t` and 1/3 for `#f`.  `observe!`
+modifies this implicit distribution to require `#t`.  This modifies
+the implicit distribution for face to be consistent with `(> face 2)`
+returning `#t`, that is it conditions p(face|I) on (> face 2).  The
 distribution of return values from this whole let form is then
 p(face|I,(> face 2)), in other words uniform over the numbers from
 3 through 6.
 
-(likelihood! p)
+`(likelihood! p)`
 
 A shortcut over observe! that modifies the current implicit
 distribution, multiplying the probability of any result subsequent to
 the call to likelihood! by p.  Could be defined as
+```scheme
 (define (likelihood! p)
   (observe! (discrete-select (#t p) (#f (- 1 p)))))
+```
 
-(stochastic-thunk->distribution thunk)
+`(stochastic-thunk->distribution thunk)`
 
 Returns, as an explicit probability distribution, the implicit
 distribution over the possible return values of the given thunk.
@@ -396,17 +412,20 @@ To continue the running example above,
 would return an explicit probability distribution object that
 assigned equal mass to the six numbers from 1 through 6.
 
-(distribution-select distribution)
+`(distribution-select distribution)`
 
 Returns one of the possible values from the given explicit
 distribution, implicitly distributed according thereto.
 roll-die, above, could have been defined as
+```scheme
 (define (roll-die)
   (distribution-select
    (make-discrete-distribution '(1 1/6) '(2 1/6) '(3 1/6)
                                '(4 1/6) '(5 1/6) '(6 1/6))))
+```
 
 Footnotes
+---------
 
 <a id="f1">[1]</a> Actually, A may refer to hidden variables as well.  So really,
 the decomposition is
