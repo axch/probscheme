@@ -27,7 +27,7 @@ Usage
 
 - [Main ideas](report.pdf?raw=true)
 - [Examples](examples/)
-- [Reference Manual](manual.txt)
+- [Reference Manual](manual.md)
 - [Developer Guide](guide.md)
 
 Authors
