@@ -168,7 +168,7 @@ Querying Explicit Distributions
 
 First, some more terminology.  In general, any probability distribution
 p(x|I') can be decomposed as p(x|A(x), I), for some predicate A and the
-information relation I' = A,I. [1] This decomposition is useful if
+information relation I' = A,I. [[1]](#f1) This decomposition is useful if
 p(x|I) is comparatively easy to compute, for then the desired p(x|I')
 can be expressed as
 
@@ -191,7 +191,7 @@ and applying some predicate A to it, such that I' = A,I.  This will be
 actually true in a nontrivial way for objects created by
 conditional-distribution, for which the distribution p(x|I) is the one
 passed in as the first argument, and the predicate A is the one passed
-in as the second. [2]
+in as the second. [[2]](#f2)
 
 This decomposition is interesting because it interacts with the
 on-demand computation of probability distributions.  At any given
@@ -199,7 +199,7 @@ time, an object computing p(x|I') according to the decomposition I' =
 A,I will have discovered some values x^a, with densities p(x^a|I), for
 which A(x) holds, and some other values x, with their densities
 p(x|I), for which A(x) does not hold, and will still be aware of
-some undetermined mass in the distribution p(x|I). [3]
+some undetermined mass in the distribution p(x|I). [[3]](#f3)
 
 As the distribution computer objects in Probabilistic Scheme do not
 predict future computation, the undetermined mass could, as far as the
@@ -408,14 +408,14 @@ roll-die, above, could have been defined as
 
 Footnotes
 
-[1] Actually, A may refer to hidden variables as well.  So really,
+<a id="f1">[1]</a> Actually, A may refer to hidden variables as well.  So really,
 the decomposition is
 
-p(x|I') = \sum_y p(x,y|A(x,y),I)
+$$p(x|I') = \sum_y p(x,y|A(x,y),I)$$
 
 but omitting this subtlety simplifies the exposition in the main text.
 
-[2] Decomposition of distributions into generators and filters like
+<a id="f2">[2]</a> Decomposition of distributions into generators and filters like
 this is not unique.  In particular, if
 
 p(x|I'') = p(x|A(x),I') and p(x|I') = p(x|B(x),I) then
@@ -427,9 +427,19 @@ implementation is free to choose whatever decomposition is convenient,
 with the only guarantee being that each individual distribution object
 will be consistent.
 
-[3] For many A, the negative case can be evaluated more efficiently
+<a id="f3">[3]</a> For many A, the negative case can be evaluated more efficiently
 than generating putative x and testing them with A.  If x is a
 compound object and A a compound predicate, it may be possible to
 determine that A does not hold of x just from some part of x, in which
 case the (potentially many) possible x which agree on that part need
 not be generated.
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script type="text/javascript">
+MathJax.Hub.Config({
+  asciimath2jax: {
+    delimiters: [['$$','$$']]
+  }
+});
+</script>
