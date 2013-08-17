@@ -1,0 +1,24 @@
+html,body,div,span,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,cite,code,del,dfn,em,font,img,ins,q,s,samp,small,strike,strong,sub,sup,tt,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td { margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent; }
+
+h1, h2, h3, h4, h5, h6 {margin: 1em 0px 15px;padding: 0px;font-weight: bold;line-height: 1.7;position: relative;}
+h1 {font-size: 2.5em;border-bottom: 1px solid rgb(221, 221, 221);}
+h2 {font-size: 2em;border-bottom: 1px solid rgb(238, 238, 238);}
+
+blockquote, ul, ol, dl, table, pre {margin: 15px 0px;}
+
+body {font-size: 15px;line-height: 1.7;padding: 0 20px;}
+
+body {color: rgb(51, 51, 51);}
+
+body {-webkit-hyphens: auto; -moz-hyphens: auto; -ms-hyphens: auto; -o-hyphens: auto; hyphens: auto; text-align: justify;}
+
+body, input, select, textarea, button {font: 13px/1.4 Helvetica,arial,freesans,clean,sans-serif;}
+
+body > h1:first-of-type {margin-top: 0px !important;}
+
+p {text-align: justify;}
+p + p {text-indent: 1.5em;}
+li p + p, dd p + p {text-indent:0;}
+
+dl dt {text-indent:-1.1em; margin-left:1.1em;}
+dl dd {text-indent:0em; margin-left:1.1em;}
