@@ -15,39 +15,29 @@ p(A|I).
 Probabilistic reasoning is the extension of Boolean logic to the case
 of incomplete certainty about the truths and falsehoods of the
 propositions about which one reasons.  [cite Cox?]  We set
-
-p(false|I) = 0,  p(true|I) = 1
-
+  $$p(false|I) = 0,  p(true|I) = 1$$
 for any consistent collection of information I.  We combine
 probabilities in parallel with propositions according to the Product
 Rule for the logical 'and' and the Sum Rule for the logical 'or'.
 The Product Rule is written
-
-p(A,B|I) = p(A|I) * p(B|A,I) = p(B|I) * p(A|B,I),
-
+  $$p(A,B|I) = p(A|I) * p(B|A,I) = p(B|I) * p(A|B,I),$$
 and says that the probability, on the strength of some particular
 background information I, of A and B is equal to the probability of
 A given I times the probability of B given A and I, and symmetrically.
 The Sum Rule, written
-
-p(A or B|I) = p(A|I) + p(B|I) - p(A,B|I),
-
+  $$p(A\textrm{ or }B|I) = p(A|I) + p(B|I) - p(A,B|I),$$
 says that the probability, on the strength of some particular
 background information I, for either A or B is equal to the probability
 for A given I, plus the probability for B given I, minus the
 probability for both A and B given I.  As a specific consequence,
 if I entails that A and B are mutually exclusive, then p(A,B|I) = 0,
 and the sum rule reduces to
-
-p(A or B|I) = p(A|I) + p(B|I) if A,B mutually exclusive given I.
-
+  $$p(A\textrm{ or }B|I) = p(A|I) + p(B|I)\textrm{ if }A,B\textrm{ mutually exclusive given }I.$$
 If we find ourselves with a collection of propositions that are
 pairwise mutually exclusive and collectively exhaustive given some
 background I, this has a further consequence, important enough to be
 given the name 'The Law of Conservation of Belief':
-
-\sum_i p(A_i|I) = 1 if A_i mutually exclusive and exhaustive given I.
-
+  $$\sum_i p(A_i|I) = 1\textrm{ if }A_i\textrm{ mutually exclusive and exhaustive given }I.$$
 We delve here into neither the motivations for these laws, nor their
 multitudinous mathematical consequences, but focus rather on the means
 by which reasoning according to them can be embedded into Scheme, to
@@ -147,14 +137,13 @@ is cons.
 Given a distribution p(x|I) and a predicate A(x), returns the distribution
 over x'es that satisfy the predicate: p(x|A(x) is true, I), which
 is given by
-
-p(x|A(x), I) = p(x|I) / p(A|I)    if A(x) is true
-p(x|A(x), I) = 0                  if A(x) is false
-
+$$\begin{eqnarray*}
+p(x|A(x), I) & = & p(x|I) / p(A|I) & \textrm{ if } & A(x)\textrm{ is true} \\
+p(x|A(x), I) & = & 0               & \textrm{ if } & A(x)\textrm{ is false}
+\end{eqnarray*}$$
 where p(A|I) is the probability that A is true.  Since the x'es are
 mutually exclusive, we know that
-
-p(A|I) = \sum_{x:A(x)} p(x|I).
+  $$p(A|I) = \sum_{x:A(x)} p(x|I).$$
 
 If p(A|I) turns out to be zero, that is, if A(x) turns out not to be
 true for any x that had positive probability under p(x|I), the result
@@ -178,10 +167,11 @@ p(x|I') can be decomposed as p(x|A(x), I), for some predicate A and the
 information relation I' = A,I. [[1]](#f1) This decomposition is useful if
 p(x|I) is comparatively easy to compute, for then the desired p(x|I')
 can be expressed as
-
-p(x|I') = p(x|I) / p(A|I)      if A(x) is true
-p(x|I') = 0                    if A(x) is false
-p(A|I) = \sum_{x:A(x)} p(x|I)
+$$\begin{eqnarray*}
+p(x|I') & = & p(x|I) / p(A|I) & \textrm{ if } & A(x)\textrm{ is true} \\
+p(x|I') & = & 0               & \textrm{ if } & A(x)\textrm{ is false} \\
+p(A|I)  & = & \sum_{x:A(x)} p(x|I) & &
+\end{eqnarray*}$$
 
 Notice that p(A|I) does not depend on x, so the first line above means
 that the desired probability p(x|I') is proportional to the quantity
@@ -429,17 +419,15 @@ Footnotes
 
 <a id="f1">[1]</a> Actually, A may refer to hidden variables as well.  So really,
 the decomposition is
-
-$$p(x|I') = \sum_y p(x,y|A(x,y),I)$$
-
+  $$p(x|I') = \sum_y p(x,y|A(x,y),I)$$
 but omitting this subtlety simplifies the exposition in the main text.
 
 <a id="f2">[2]</a> Decomposition of distributions into generators and filters like
 this is not unique.  In particular, if
-
-p(x|I'') = p(x|A(x),I') and p(x|I') = p(x|B(x),I) then
-p(x|I'') = p(x|(A(x) and B(x)),I)
-
+$$\begin{eqnarray*}
+p(x|I'') & = & p(x|A(x),I')\textrm{ and }p(x|I') = p(x|B(x),I)\textrm{ then} \\
+p(x|I'') & = & p(x|(A(x)\textrm{ and }B(x)),I)
+\end{eqnarray*}$$
 This may arise nontrivially if a distribution produced by
 conditional-distribution is itself further conditioned.  The
 implementation is free to choose whatever decomposition is convenient,
