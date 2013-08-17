@@ -142,8 +142,8 @@ Given a distribution $p(x|I)$ and a predicate $A(x)$, returns the distribution
 over $x$es that satisfy the predicate: $p(x|A(x)\textrm{ is true}, I)$, which
 is given by
 $$\begin{eqnarray*}
-p(x|A(x), I) & = & p(x|I) / p(A|I) & \textrm{ if } & A(x)\textrm{ is true} \\
-p(x|A(x), I) & = & 0               & \textrm{ if } & A(x)\textrm{ is false}
+p(x|A(x), I) & = & p(x|I) / p(A|I) & \textrm{ if } & A(x)\textrm{ is true}, \\
+p(x|A(x), I) & = & 0               & \textrm{ if } & A(x)\textrm{ is false}.
 \end{eqnarray*}$$
 where $p(A|I)$ is the probability that $A$ is true.  Since the $x$es are
 mutually exclusive, we know that
@@ -172,9 +172,9 @@ information relation $I' = A,I$. [[1]](#f1) Such a decomposition is useful if
 $p(x|I)$ is comparatively easy to compute, for then the desired $p(x|I')$
 can be expressed as
 $$\begin{eqnarray*}
-p(x|I') & = & p(x|I) / p(A|I) & \textrm{ if } & A(x)\textrm{ is true} \\
-p(x|I') & = & 0               & \textrm{ if } & A(x)\textrm{ is false} \\
-p(A|I)  & = & \sum_{x:A(x)} p(x|I) & &
+p(x|I') & = & p(x|I) / p(A|I) & \textrm{ if } & A(x)\textrm{ is true}, \\
+p(x|I') & = & 0               & \textrm{ if } & A(x)\textrm{ is false}, \\
+p(A|I)  & = & \sum_{x:A(x)} p(x|I). & &
 \end{eqnarray*}$$
 
 Notice that $p(A|I)$ does not depend on $x$, so the first line above means
@@ -434,7 +434,8 @@ this is not unique.  In particular, if
 $$\begin{eqnarray*}
 p(x|I'') & = & p(x|A(x),I')\textrm{ and }p(x|I') = p(x|B(x),I)\textrm{ then} \\
 p(x|I'') & = & p(x|(A(x)\textrm{ and }B(x)),I)
-\end{eqnarray*}$$
+\end{eqnarray*}.$$
+
 This may arise nontrivially if a distribution produced by
 `conditional-distribution` is itself further conditioned.  The
 implementation is free to choose whatever decomposition is convenient,
