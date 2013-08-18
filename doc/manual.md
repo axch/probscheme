@@ -1,5 +1,4 @@
-Probabilistic Scheme Reference Manual
-=====================================
+% Probabilistic Scheme Reference Manual
 
 Background
 ----------

@@ -14,7 +14,7 @@ body {-webkit-hyphens: auto; -moz-hyphens: auto; -ms-hyphens: auto; -o-hyphens: 
 
 body, input, select, textarea, button {font: 13px/1.4 Helvetica,arial,freesans,clean,sans-serif;}
 
-body > h1:first-of-type {margin-top: 0px !important;}
+body h1:first-of-type {margin-top: 0px !important;}
 
 p {text-align: justify; margin-bottom: 0.75em;}
 p + p {text-indent: 1.5em;}
@@ -22,3 +22,7 @@ li p + p {text-indent:0;}
 
 dl dt {text-indent:-1.1em; margin-left:1.1em;}
 dl dd {margin-left:1.1em; margin-bottom: .75em;}
+
+ul li, ol li {margin-left: 1.1em;}
+
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {color:inherit; text-decoration: none;}
