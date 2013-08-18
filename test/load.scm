@@ -69,7 +69,7 @@
                            (lambda ()
                              (set! load/suppress-loading-message? #t)
                              (load "../examples/coin-flipping-explicitly")
-                             (load "../examples/more-animal-tree")))))
+                             (load "../examples/animal-tree-explicitly")))))
   (register-test expl-group))
 
 (in-test-group
