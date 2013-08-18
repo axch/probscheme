@@ -27,7 +27,7 @@ Usage
 
 - [Main ideas](report.pdf?raw=true)
 - [Examples](examples/)
-- [Reference Manual](manual.md)
+- [Reference Manual](http://alexey.radul.name/probscheme/manual)
 - [Developer Guide](guide.md)
 
 Authors
