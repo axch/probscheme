@@ -16,9 +16,9 @@ body, input, select, textarea, button {font: 13px/1.4 Helvetica,arial,freesans,c
 
 body > h1:first-of-type {margin-top: 0px !important;}
 
-p {text-align: justify;}
+p {text-align: justify; margin-bottom: 0.75em;}
 p + p {text-indent: 1.5em;}
-li p + p, dd p + p {text-indent:0;}
+li p + p {text-indent:0;}
 
 dl dt {text-indent:-1.1em; margin-left:1.1em;}
-dl dd {text-indent:0em; margin-left:1.1em;}
+dl dd {margin-left:1.1em; margin-bottom: .75em;}

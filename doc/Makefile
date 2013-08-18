@@ -1,2 +1,2 @@
 manual.html: manual.md Makefile
-	pandoc --to=html5 --standalone --mathjax $< > $@
+	pandoc --to=html5 --standalone --css=manual.css --mathjax $< > $@
