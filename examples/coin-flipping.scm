@@ -17,6 +17,14 @@
 ;;; along with Probabilistic Scheme.  If not, see <http://www.gnu.org/licenses/>.
 ;;; ----------------------------------------------------------------------
 
+;;; This is a little model of evaluating what one thinks of the
+;;; fairness of a coin from watching the results of flipping it.  The
+;;; coin is presumed to be fair (high prior probability), but could be
+;;; rigged to show only one result (low prior probability); the
+;;; posterior either determines that it cannot be rigged if it shows
+;;; two different results, or leans increasingly towards assuming it
+;;; is as flips keep showing the same result.
+
 (define (prior)
   (discrete-select ('fair 98/100)
 		   ('heads-only 1/100)
@@ -36,3 +44,25 @@
 		   (likelihood-model hypothesis datum))
 		 data)
        hypothesis))))
+
+#|
+ (probability-of (posterior '(heads tails)) 'fair)
+
+ ;Value: 1.
+
+ (probability-of (posterior '(heads heads)) 'fair)
+
+ ;Value: .9607843137254901
+
+ (probability-of (posterior '(heads heads heads)) 'fair)
+
+ ;Value: .924528301886792
+
+ (probability-of (posterior '(heads heads heads heads)) 'fair)
+
+ ;Value: .8596491228070171
+
+ (probability-of (posterior '(heads heads heads heads heads)) 'fair)
+
+ ;Value: .7538461538461534
+|#
