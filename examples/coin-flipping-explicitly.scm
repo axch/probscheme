@@ -17,6 +17,9 @@
 ;;; along with Probabilistic Scheme.  If not, see <http://www.gnu.org/licenses/>.
 ;;; ----------------------------------------------------------------------
 
+;;; This is the same little model as coin-flipping.scm but with
+;;; explicit rather than implicit distributions.
+
 (define (prior)
   (make-discrete-distribution '(fair 98/100)
 			      '(heads-only 1/100)

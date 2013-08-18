@@ -68,7 +68,7 @@
                            my-path
                            (lambda ()
                              (set! load/suppress-loading-message? #t)
-                             (load "../examples/more-coin-flipping")
+                             (load "../examples/coin-flipping-explicitly")
                              (load "../examples/more-animal-tree")))))
   (register-test expl-group))
 
