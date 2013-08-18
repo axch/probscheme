@@ -17,6 +17,11 @@
 ;;; along with Probabilistic Scheme.  If not, see <http://www.gnu.org/licenses/>.
 ;;; ----------------------------------------------------------------------
 
+;;; This example is a purely generative model (no evidence) of playing
+;;; around with Bernoulli-style urns.
+
+;;; Representation for an urn with red or blue balls mixed in it
+
 ;; Even though that's a little inconvenient, the urns are functional
 ;; because there is otherwise no way to backtrack changes to them.  In
 ;; particular, it seems that define-structure would need to be
@@ -44,12 +49,17 @@
 				('blue (/ (urn-blue urn) (urn-size urn))))))
     (values color (remove-ball urn color))))
 
+;;; We feel like replacing red balls but not blue balls
+
 (define (joyce-draw urn)  
   (let ((color (discrete-select ('red  (/ (urn-red urn)  (urn-size urn)))
 				('blue (/ (urn-blue urn) (urn-size urn))))))
     (values color (if (eq? color 'red)
 		      urn ; put red balls back
 		      (remove-ball urn color)))))
+
+;;; Here is how we actually play with the probabilities of various
+;;; sequences of draws
 
 (define (draw-sequence drawer urn trials)
   (let loop ((urn urn)
@@ -62,3 +72,27 @@
 	    (loop new-urn
 		  (cons color drawn-so-far)
 		  (- trials-left 1)))))))
+
+(define (probability-of-sequence sequence drawer urn)
+  (probability-of
+   (stochastic-thunk->distribution
+    (lambda () (draw-sequence drawer urn (length sequence))))
+   sequence))
+
+#|
+ (probability-of-sequence '(red red red) joyce-draw (make-urn 3 3))
+
+ ;Value: 1/8
+
+ (probability-of-sequence '(red red blue) joyce-draw (make-urn 3 3))
+
+ ;Value: 1/8
+
+ (probability-of-sequence '(red blue blue) joyce-draw (make-urn 3 3))
+
+ ;Value: 1/10
+
+ (probability-of-sequence '(blue blue blue) joyce-draw (make-urn 3 3))
+
+ ;Value: 1/20
+|#

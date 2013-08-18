@@ -17,12 +17,6 @@
 ;;; along with Probabilistic Scheme.  If not, see <http://www.gnu.org/licenses/>.
 ;;; ----------------------------------------------------------------------
 
-(define (probability-of-sequence sequence drawer urn)
-  (probability-of
-   (stochastic-thunk->distribution
-    (lambda () (draw-sequence drawer urn (length sequence))))
-   sequence))
-
 (in-test-group
  bernoulli-urn-test
  (define-test (bernoulli-urns)
