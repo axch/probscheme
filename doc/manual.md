@@ -101,60 +101,60 @@ Creating Explicit Distributions
 
 `(make-discrete-distribution possibility ...)`
 
-Interprets each possibility argument as a two-element list of an object
-and its probability.  Returns the probability distribution that assigns
-that probability to those objects, and zero to all others.  Expects
-the probabilities to sum to 1.
+  : Interprets each possibility argument as a two-element list of an
+    object and its probability.  Returns the probability distribution
+    that assigns that probability to those objects, and zero to all
+    others.  Expects the probabilities to sum to 1.
 
 `(alist->distribution alist)`
 
-Like `make-discrete-distribution`, but accepts a association list of
-data to probabilities.
+  : Like `make-discrete-distribution`, but accepts a association list of
+    data to probabilities.
 
 `(hash-table->distribution hash-table)`
 
-Like `alist->distribution` but accepts a hash table mapping data to
-probabilities.
+  : Like `alist->distribution` but accepts a hash table mapping data to
+    probabilities.
 
 Manipulating Explicit Distributions
 -----------------------------------
 
 `(map-distribution distribution function)`
 
-Given the distribution $p(x|I)$ and the function $f$ returns the
-distribution $p(f(x)|I)$.
+  : Given the distribution $p(x|I)$ and the function $f$ returns the
+    distribution $p(f(x)|I)$.
 
 `(dependent-product distribution function combiner)`
 
-A distribution $p(y|X,I)$ that depends on the value of some variable $X$
-can be represented as a function of $X$ that, when given any particular
-value $x$, returns the distribution $p(y|X=x,I)$.  Given a distribution
-$p(x|I)$ and such a function $x \mapsto p(y|X=x,I)$, `dependent-product`
-returns the distribution $p(x,y|I)$ (computed in accordance with the
-Product Rule).  Instead of trying to represent a distribution over
-multiple values, `dependent-product` takes a combiner to apply to the
-values $x$ and `y`, to return $p(\textrm{combiner}(x, y)|I)$.  An oft-useful combiner
-is `cons`.
+  : A distribution $p(y|X,I)$ that depends on the value of some variable $X$
+    can be represented as a function of $X$ that, when given any particular
+    value $x$, returns the distribution $p(y|X=x,I)$.  Given a distribution
+    $p(x|I)$ and such a function $x \mapsto p(y|X=x,I)$, `dependent-product`
+    returns the distribution $p(x,y|I)$ (computed in accordance with the
+    Product Rule).  Instead of trying to represent a distribution over
+    multiple values, `dependent-product` takes a combiner to apply to the
+    values $x$ and `y`, to return $p(\textrm{combiner}(x, y)|I)$.  An oft-useful combiner
+    is `cons`.
 
 `(conditional-distribution distribution predicate)`
 
-Given a distribution $p(x|I)$ and a predicate $A(x)$, returns the distribution
-over $x$es that satisfy the predicate: $p(x|A(x)\textrm{ is true}, I)$, which
-is given by
-$$\begin{eqnarray*}
-p(x|A(x), I) & = & p(x|I) / p(A|I) & \textrm{ if } & A(x)\textrm{ is true}, \\
-p(x|A(x), I) & = & 0               & \textrm{ if } & A(x)\textrm{ is false}.
-\end{eqnarray*}$$
-where $p(A|I)$ is the probability that $A$ is true.  Since the $x$es are
-mutually exclusive, we know that
-  $$p(A|I) = \sum_{x:A(x)} p(x|I).$$
+  : Given a distribution $p(x|I)$ and a predicate $A(x)$, returns the distribution
+    over $x$es that satisfy the predicate: $p(x|A(x)\textrm{ is true}, I)$, which
+    is given by
+    $$\begin{eqnarray*}
+    p(x|A(x), I) & = & p(x|I) / p(A|I) & \textrm{ if } & A(x)\textrm{ is true}, \\
+    p(x|A(x), I) & = & 0               & \textrm{ if } & A(x)\textrm{ is false}.
+    \end{eqnarray*}$$
+    where $p(A|I)$ is the probability that $A$ is true.  Since the $x$es are
+    mutually exclusive, we know that
+      $$p(A|I) = \sum_{x:A(x)} p(x|I).$$
 
-If $p(A|I)$ turns out to be zero, that is, if $A(x)$ turns out not to be
-true for any $x$ that had positive probability under $p(x|I)$, the result
-will be an impossible distribution.  Such a distribution will always
-give 0 and 1 as the bounds for any datum (see [Querying](#querying-explicit-distributions), below), and
-may throw division by zero errors on some operations if completely
-determined.
+    If $p(A|I)$ turns out to be zero, that is, if $A(x)$ turns out not to be
+    true for any $x$ that had positive probability under $p(x|I)$, the result
+    will be an impossible distribution.  Such a distribution will always
+    give 0 and 1 as the bounds for any datum (see [Querying](#querying-explicit-distributions), below), and
+    may throw division by zero errors on some operations if completely
+    determined.
 
 Abstracting Explicit Distributions
 ----------------------------------
@@ -215,105 +215,105 @@ further computation:
 
 `(distribution? thing)`
 
-Returns #t if the given thing is an object explicitly representing a
-probability distribution, and #f otherwise.
+  : Returns #t if the given thing is an object explicitly representing a
+    probability distribution, and #f otherwise.
 
 `(distribution/determined? distribution)`
 
-Returns whether the given distribution object has already been fully
-determined, as opposed to having more computation it could do to
-further refine its knowledge of the distribution it represents.
+  : Returns whether the given distribution object has already been fully
+    determined, as opposed to having more computation it could do to
+    further refine its knowledge of the distribution it represents.
 
 `(distribution/undetermined-density distribution)`
 
-Returns the amount of density, relative the distribution's internal
-decomposition, that remains as yet undetermined.
+  : Returns the amount of density, relative the distribution's internal
+    decomposition, that remains as yet undetermined.
 
 `(distribution/min-normalizer distribution)`
 
-Return the lower bound on the normalization constant $p(A|I)$.  The
-lower bound holds if all of the undetermined density goes to not $A$,
-and is equal to the total density of discovered values that satisfy $A$:
-$$\textrm{min-normalizer} = \sum_{x^a} p(x^a|I).$$
+  : Return the lower bound on the normalization constant $p(A|I)$.  The
+    lower bound holds if all of the undetermined density goes to not $A$,
+    and is equal to the total density of discovered values that satisfy $A$:
+    $$\textrm{min-normalizer} = \sum_{x^a} p(x^a|I).$$
 
 `(distribution/max-normalizer distribution)`
 
-Return the upper bound on the normalization constant $p(A|I)$.  The
-upper bound holds if all the undetermined density goes to values that
-satisfy $A$, and is equal to the total density of discovered values that
-satisfy $A$ plus the undetermined density:
-$$\textrm{max-normalizer} = \textrm{min-normalizer} + \textrm{undetermined-density}.$$
+  : Return the upper bound on the normalization constant $p(A|I)$.  The
+    upper bound holds if all the undetermined density goes to values that
+    satisfy $A$, and is equal to the total density of discovered values that
+    satisfy $A$ plus the undetermined density:
+    $$\textrm{max-normalizer} = \textrm{min-normalizer} + \textrm{undetermined-density}.$$
 
 `(distribution/undetermined-mass distribution)`
 
-Return the amount of probability mass that remains as yet
-undetermined.
-$$\textrm{undetermined-mass} = \frac{\textrm{undetermined-density}}{\textrm{max-normalizer}}.$$
+  : Return the amount of probability mass that remains as yet
+    undetermined.
+    $$\textrm{undetermined-mass} = \frac{\textrm{undetermined-density}}{\textrm{max-normalizer}}.$$
 
 `(distribution/datum-density distribution datum)`
 
-Return the density the datum is known to have in the distribution, as
-computed so far.  If the datum is known to satisfy the predicate, this
-is (the so-far-discovered portion of) $p(x^a|I)$.  If it is not, this is
-zero.
+  : Return the density the datum is known to have in the distribution, as
+    computed so far.  If the datum is known to satisfy the predicate, this
+    is (the so-far-discovered portion of) $p(x^a|I)$.  If it is not, this is
+    zero.
 
 `(distribution/min-probability distribution datum)`
 
-Return the minimum probability that the given datum could have in this
-distribution.  The minimum value will be realized if all the remaining
-uncomputed density goes to other data that satisfy the predicate
-(maximizing the normalization constant).
-$$\textrm{min-probability} = \frac{\textrm{datum-density}}{\textrm{max-normalizer}}.$$
+  : Return the minimum probability that the given datum could have in this
+    distribution.  The minimum value will be realized if all the remaining
+    uncomputed density goes to other data that satisfy the predicate
+    (maximizing the normalization constant).
+    $$\textrm{min-probability} = \frac{\textrm{datum-density}}{\textrm{max-normalizer}}.$$
 
 `(distribution/max-probability distribution datum)`
 
-Return the maximum probability that the given datum could have in this
-distribution.  The maximum value will be realized if all the remaining
-uncomputed density goes to this datum.
-$$\textrm{max-probability} = \frac{\textrm{datum-density} + \textrm{undetermined-density}}{\textrm{max-normalizer}}.$$
+  : Return the maximum probability that the given datum could have in this
+    distribution.  The maximum value will be realized if all the remaining
+    uncomputed density goes to this datum.
+    $$\textrm{max-probability} = \frac{\textrm{datum-density} + \textrm{undetermined-density}}{\textrm{max-normalizer}}.$$
 
 `(distribution/probability distribution datum)`
 
-If the distribution is completely determined, then the above min and
-max probabilities will be equal, and can be called the probability.
-This procedure returns that value, or signals an error if the
-distribution is not completely determined.
+  : If the distribution is completely determined, then the above min and
+    max probabilities will be equal, and can be called the probability.
+    This procedure returns that value, or signals an error if the
+    distribution is not completely determined.
 
 Besides that, probability distribution objects can be asked to perform
 more of their computations:
 
 `(distribution/refine! distribution)`
 
-Runs the computation in the given distribution for the smallest
-detectable increment, which is either until an acceptable datum $x^a$ is
-discovered (or re-discovered) or until some undetermined density is
-lost to failing to satisfy $A$.  In either case, the
-`undetermined-density` decreases.  In the former case, the
-`min-normalizer` of the distribution and the `datum-density`
-of the discovered datum increase.  In the latter case the
-`max-normalizer` decreases.  The `min/max-probability`
-quantities then behave correspondingly.  The `undetermined-mass`
-decreases unless no values have yet been found that satisfy $A$, in
-which case it remains 1.
+  : Runs the computation in the given distribution for the smallest
+    detectable increment, which is either until an acceptable datum $x^a$ is
+    discovered (or re-discovered) or until some undetermined density is
+    lost to failing to satisfy $A$.  In either case, the
+    `undetermined-density` decreases.  In the former case, the
+    `min-normalizer` of the distribution and the `datum-density`
+    of the discovered datum increase.  In the latter case the
+    `max-normalizer` decreases.  The `min/max-probability`
+    quantities then behave correspondingly.  The `undetermined-mass`
+    decreases unless no values have yet been found that satisfy $A$, in
+    which case it remains 1.
 
-If the distribution computation has been finished, i.e. no
-undetermined density remains, `distribution/refine!` does nothing and
-returns `#f`.  If `distribution/refine!` changed something, it returns `#t`.
-Higher-level forcing functions can be built by iterating
-`distribution/refine!` for some desired amount of time or until some
-desired condition has been met.
+    If the distribution computation has been finished, i.e. no
+    undetermined density remains, `distribution/refine!` does nothing and
+    returns `#f`.  If `distribution/refine!` changed something, it returns `#t`.
+    Higher-level forcing functions can be built by iterating
+    `distribution/refine!` for some desired amount of time or until some
+    desired condition has been met.
 
 `(distribution/refine-until! distribution test)`
 
-Forces the distribution (with `distribution/refine!`) until the `test`
-returns true.  If the `test` is already true, does nothing.  If the
-distribution is already fully refined, but the test is not satisfied,
-signals an error.
+  : Forces the distribution (with `distribution/refine!`) until the `test`
+    returns true.  If the `test` is already true, does nothing.  If the
+    distribution is already fully refined, but the test is not satisfied,
+    signals an error.
 
 `(distribution/refine-to-mass-bound! distribution bound)`
 
-Forces the distribution until the undetermined mass in the distribution
-is less than or equal to the given bound.
+  : Forces the distribution until the undetermined mass in the distribution
+    is less than or equal to the given bound.
 
 Implicit Distributions
 ----------------------
@@ -325,13 +325,13 @@ some "random" process, leaving the distributions that arise inside
 that process implicit, and converting to an explicit distribution only
 when it becomes useful to consider the distribution as a whole.
 
-`(discrete-select (object mass) ...)                             syntax`
+`(discrete-select (object mass) ...)                              syntax`
 
-Takes any number of two-element lists representing object-probability
-pairs.  The expressions defining the objects and probabilities are
-evaluated lazily, and the probabilities are expected to sum to 1.
-Returns one of the objects, implicitly distributed according to the
-distribution specified by the probabilities.
+  : Takes any number of two-element lists representing object-probability
+    pairs.  The expressions defining the objects and probabilities are
+    evaluated lazily, and the probabilities are expected to sum to 1.
+    Returns one of the objects, implicitly distributed according to the
+    distribution specified by the probabilities.
 
 Implicit distributions for the values of expressions transform
 according to the combinations of the input values and the rules of
@@ -353,7 +353,7 @@ from 2 through 12, implicitly distributed according to the probability
 of getting that sum when rolling two fair six sided dice.  So on and
 so forth, for the purely functional subset of Scheme.
 
-Laziness on the objects of discrete-select permits construction of
+Laziness on the objects of `discrete-select` permits construction of
 infinite distributions, for example the geometric distribution with
 constant `alpha` and minimum value `n`:
 
@@ -366,8 +366,9 @@ constant `alpha` and minimum value `n`:
 
 `(observe! boolean)`
 
-Modifies the current implicit distribution by conditioning
-it on the argument being true.  Returns an unspecified value.
+  : Modifies the current implicit distribution by conditioning
+    it on the argument being true.  Returns an unspecified value.
+
 Consider, for example, the expression
 
 ```scheme
@@ -390,36 +391,36 @@ $p(\textrm{face}|I,\textrm{face} > 2)$, in other words uniform over the numbers 
 
 `(likelihood! p)`
 
-A shortcut over `observe!` that modifies the current implicit
-distribution, multiplying the probability of any result subsequent to
-the call to `likelihood!` by `p`.  Could be defined as
+  : A shortcut over `observe!` that modifies the current implicit
+    distribution, multiplying the probability of any result subsequent to
+    the call to `likelihood!` by `p`.  Could be defined as
 
-```scheme
-(define (likelihood! p)
-  (observe! (discrete-select (#t p) (#f (- 1 p)))))
-```
+    ```scheme
+    (define (likelihood! p)
+      (observe! (discrete-select (#t p) (#f (- 1 p)))))
+    ```
 
 `(stochastic-thunk->distribution thunk)`
 
-Returns, as an explicit probability distribution, the implicit
-distribution over the possible return values of the given `thunk`.
-To continue the running example above,
-`(stochastic-thunk->distribution roll-die)`
-would return an explicit probability distribution object that
-assigned equal mass to the six numbers from 1 through 6.
+  : Returns, as an explicit probability distribution, the implicit
+    distribution over the possible return values of the given `thunk`.
+    To continue the running example above,
+    `(stochastic-thunk->distribution roll-die)`
+    would return an explicit probability distribution object that
+    assigned equal mass to the six numbers from 1 through 6.
 
 `(distribution-select distribution)`
 
-Returns one of the possible values from the given explicit
-distribution, implicitly distributed according thereto.
-`roll-die`, above, could have been defined as
+  : Returns one of the possible values from the given explicit
+    distribution, implicitly distributed according thereto.
+    `roll-die`, above, could have been defined as
 
-```scheme
-(define (roll-die)
-  (distribution-select
-   (make-discrete-distribution '(1 1/6) '(2 1/6) '(3 1/6)
-                               '(4 1/6) '(5 1/6) '(6 1/6))))
-```
+    ```scheme
+    (define (roll-die)
+      (distribution-select
+       (make-discrete-distribution '(1 1/6) '(2 1/6) '(3 1/6)
+                                   '(4 1/6) '(5 1/6) '(6 1/6))))
+    ```
 
 Footnotes
 ---------
