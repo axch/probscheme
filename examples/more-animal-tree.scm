@@ -21,9 +21,10 @@
 ;; Theory-based induction. Kemp, C. S. and Tenenbaum,
 ;; J. B. (2003). Proceedings of the Twenty-Fifth Annual Conference of
 ;; the Cognitive Science Society.
-;; It differs from animal-tree.scm in that I use a non-magical
-;; probability distribution library, in an effort to understand
-;; the meaning of the magic.
+
+;; It differs from animal-tree.scm in that I use explicit probability
+;; distributions instead of implicit ones, to display what implicit
+;; distributions do.
 (define *kemp-tenenbaum-tree*
   '(0 (1/4 (1/4 (1/2 (0 chimp) (0 gorilla))
 		(1/6 (1/6 (1/6 horse) (1/6 cow))

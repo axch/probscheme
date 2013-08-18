@@ -22,6 +22,10 @@
 ;; J. B. (2003). Proceedings of the Twenty-Fifth Annual Conference of
 ;; the Cognitive Science Society.
 
+;; The general idea is that observed features of species may turn on
+;; randomly at any point in a species' ancestry, leading to species
+;; closer on the evolutionary tree to have more features in common.
+
 ;; A tree is a list of the leading branch length, and either
 ;; the terminal symbol or the left and right subtrees
 ;; The tree given in Figure 1 of that paper looks roughly like this.
