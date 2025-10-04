@@ -39,6 +39,7 @@ jobs:
           mkdir -p _site
           # Publish the manual as the site root
           cp doc/manual.html _site/index.html
+          [ -f doc/manual.css ] && cp doc/manual.css _site/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
