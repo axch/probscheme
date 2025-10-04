@@ -27,7 +27,7 @@ Usage
 
 - [Main ideas](report.pdf?raw=true)
 - [Examples](examples/)
-- [Reference Manual](http://alexey.radul.name/probscheme/manual)
+- [Reference Manual](https://axch.github.io/probscheme/)
 - [Developer Guide](guide.md)
 
 Authors
