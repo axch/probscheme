@@ -1,0 +1,56 @@
+# .github/workflows/manual-pages.yml
+name: Build & Deploy Manual
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - "doc/**"
+      - ".github/workflows/manual.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make pandoc
+
+      - name: Build manual.html
+        working-directory: doc
+        run: make manual.html
+
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p _site
+          # Publish the manual as the site root
+          cp doc/manual.html _site/index.html
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
