@@ -6,7 +6,7 @@ on:
     branches: [ main, master ]
     paths:
       - "doc/**"
-      - ".github/workflows/manual.yml"
+      - ".github/workflows/manual.yaml"
   workflow_dispatch:
 
 permissions:
